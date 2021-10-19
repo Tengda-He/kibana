@@ -20,14 +20,17 @@ try {
         env.NODE_OPTIONS = '--max_old_space_size=8192'
         env.TEST_BROWSER_HEADLESS=1
         env.KIBANA_DIR=sh(script: 'pwd', , returnStdout: true).trim()
-        sh 'which npm'
-        sh 'npm --version'
+        sh 'node --version'
         sh 'rm -rf target/junit'
         sh 'rm -rf junit-test'
         sh 'mkdir junit-test'
 
         stage('Bootstrap') {
             sh 'yarn kbn bootstrap'
+        }
+
+        stage('Build') {
+            sh 'yarn build --oss --skip-os-packages'
         }
 
         stage('Unit Test') {
