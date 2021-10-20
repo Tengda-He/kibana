@@ -46,4 +46,10 @@ try {
             junit 'target/junit/TEST-Jest Tests*.xml'
         }
     }
-}
+} catch (e) {
+      echo 'This will run only if failed'
+      currentBuild.result = 'FAILURE'
+      // Since we're catching the exception in order to report on it,
+      // we need to re-throw it, to ensure that the build is marked as failed
+      throw e
+} 
