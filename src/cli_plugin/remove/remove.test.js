@@ -25,7 +25,7 @@ import remove from './remove';
 import { join } from 'path';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 
-describe('kibana cli', function () {
+describe.skip('kibana cli', function () {
   describe('plugin remover', function () {
     const pluginDir = join(__dirname, '.test.data.remove');
     let processExitStub;
