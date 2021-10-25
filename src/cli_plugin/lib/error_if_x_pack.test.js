@@ -19,7 +19,7 @@
 
 import { errorIfXPackInstall, errorIfXPackRemove } from './error_if_x_pack';
 
-describe('error_if_xpack', () => {
+describe.skip('error_if_xpack', () => {
   it('should error on install if x-pack by name', () => {
     expect(() => errorIfXPackInstall({ plugin: 'x-pack' })).toThrow();
   });

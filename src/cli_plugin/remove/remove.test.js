@@ -75,7 +75,7 @@ describe('kibana cli', function () {
       expect(existsSync(settings.pluginPath)).toEqual(false);
     });
 
-    it('distribution error if x-pack does not exist', () => {
+    it.skip('distribution error if x-pack does not exist', () => {
       settings.pluginPath = join(pluginDir, 'x-pack');
       settings.plugin = 'x-pack';
       expect(existsSync(settings.pluginPath)).toEqual(false);
