@@ -68,9 +68,44 @@ node {
                 junit 'target/junit/TEST-Plugin Functional Tests*.xml'
             }
         }
+        stage('Functional Test') {
+            echo "Starting functional test..."
+            functionalDynamicParallelSteps(testImage);
+            junit 'target/junit/ci*/*.xml'
+        }
     } catch (e) {
             echo 'This will run only if failed'
             currentBuild.result = 'FAILURE'
             throw e
     } 
+}
+
+def functionalDynamicParallelSteps(image){
+    ciGroupsMap = [:]
+    for (int i = 1; i <= 12; i++) {
+        def currentCiGroup = "ciGroup${i}";
+        def currentStep = i;
+        ciGroupsMap["${currentCiGroup}"] = {
+            stage("${currentCiGroup}") {
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "CI_GROUP=${currentCiGroup}",
+                    "GCS_UPLOAD_PREFIX=fake",
+                    "TEST_KIBANA_HOST=localhost",
+                    "TEST_KIBANA_PORT=6610",
+                    "TEST_ES_TRANSPORT_PORT=9403",
+                    "TEST_ES_PORT=9400",
+                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
+                    "JOB=ci${currentStep}",
+                    "CACHE_DIR=${currentCiGroup}"
+                ]) {
+                    image.inside {
+                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
+                    }
+                }
+            }
+        }
+    }
+    parallel ciGroupsMap
 }
