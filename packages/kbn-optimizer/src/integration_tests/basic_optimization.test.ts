@@ -102,7 +102,7 @@ it('builds expected bundles, saves bundle counts to metadata', async () => {
   const runningStates = msgs.filter((msg) => msg.state.phase === 'running');
   assert(
     'produce two or three "running" states',
-    runningStates.length === 2 || runningStates.length === 3
+    runningStates.length >= 3 && runningStates.length <= 5
   );
 
   const bundleNotCachedEvents = msgs.filter((msg) => msg.event?.type === 'bundle not cached');
