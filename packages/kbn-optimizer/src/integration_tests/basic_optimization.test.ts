@@ -101,7 +101,7 @@ it('builds expected bundles, saves bundle counts to metadata', async () => {
 
   const runningStates = msgs.filter((msg) => msg.state.phase === 'running');
   assert(
-    'produce two or three "running" states',
+    'produce three to five "running" states',
     runningStates.length >= 3 && runningStates.length <= 5
   );
 
