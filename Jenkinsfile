@@ -82,10 +82,11 @@ node {
         stage('Functional Test') {
             echo "Starting functional test..."
             functionalDynamicParallelSteps(testImage);
-            junit 'target/junit/TEST-ci* *.xml'
+            junit 'target/junit/ci* *.xml'
         }
     } catch (e) {
             echo 'This will run only if failed'
+            junit 'target/junit/**/*.xml'
             currentBuild.result = 'FAILURE'
             throw e
     } 
