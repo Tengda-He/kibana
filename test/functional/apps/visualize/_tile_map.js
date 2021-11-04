@@ -280,8 +280,6 @@ export default function ({ getService, getPageObjects }) {
         await testSubjects.click('suppressZoomWarnings');
         await PageObjects.tileMap.clickMapZoomOut(waitForLoading);
         await testSubjects.waitForDeleted('suppressZoomWarnings');
-        await PageObjects.tileMap.clickMapZoomIn(waitForLoading);
-
         await testSubjects.missingOrFail('maxZoomWarning');
       });
     });
