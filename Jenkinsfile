@@ -29,7 +29,29 @@ node {
                 sh 'google-chrome --version'
                 sh 'yarn kbn bootstrap'
             }
+            
+            stage('Build test plugins') {
+                sh """
+                    echo " -> building kibana platform plugins"
+                    node scripts/build_kibana_platform_plugins \\
+                        --oss \\
+                        --no-examples \\
+                        --scan-dir "$env.KIBANA_DIR/test/plugin_functional/plugins" \\
+                        --workers 6 \\
+                        --verbose
+                    """
+            }
 
+            stage('Unit Test') {
+                echo "Starting unit test..."
+                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
+
+                if (utResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Jest Tests*.xml'
+            }
         }
     } catch (e) {
             echo 'This will run only if failed'
