@@ -29,18 +29,6 @@ node {
                 sh 'google-chrome --version'
                 sh 'yarn kbn bootstrap'
             }
-            
-            stage('Build test plugins') {
-                sh """
-                    echo " -> building kibana platform plugins"
-                    node scripts/build_kibana_platform_plugins \\
-                        --oss \\
-                        --no-examples \\
-                        --scan-dir "$env.KIBANA_DIR/test/plugin_functional/plugins" \\
-                        --workers 6 \\
-                        --verbose
-                    """
-            }
 
             stage('Unit Test') {
                 echo "Starting unit test..."
