@@ -40,6 +40,18 @@ node {
 
                 junit 'target/junit/TEST-Jest Tests*.xml'
             }
+
+            stage('Integration Test') {
+                echo "Start Integration Tests"
+                def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest_integration -u --ci'
+
+                if (itResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Jest Integration Tests*.xml'
+            }
+
         }
     } catch (e) {
             echo 'This will run only if failed'
