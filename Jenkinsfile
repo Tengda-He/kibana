@@ -25,7 +25,7 @@ node {
             sh 'mkdir junit-test'
 
             stage('Bootstrap') {
-                sh 'yarn add --dev jest-junit'
+                sh 'yarn add --dev jest-junit@10.0.0'
                 sh 'google-chrome --version'
                 sh 'yarn kbn bootstrap'
             }
