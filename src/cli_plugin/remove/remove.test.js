@@ -77,7 +77,7 @@ describe('kibana cli', function () {
       remove(settings, logger);
       expect(existsSync(settings.pluginPath)).toEqual(false);
     });
-
+    // this test is skipped because it uses x-pack in test case. Note: The whole x-pack directory has been removed!
     it.skip('distribution error if x-pack does not exist', () => {
       settings.pluginPath = join(pluginDir, 'x-pack');
       settings.plugin = 'x-pack';

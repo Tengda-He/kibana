@@ -18,7 +18,7 @@
  */
 
 import { isOSS } from './is_oss';
-
+// this test is skipped because it fails if x-pack isn't installed. Note: The whole x-pack directory has been removed!
 describe.skip('is_oss', () => {
   describe('x-pack installed', () => {
     it('should return false', () => {
