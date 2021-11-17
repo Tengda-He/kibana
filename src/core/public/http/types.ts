@@ -205,12 +205,7 @@ export interface HttpRequestInit {
 
 /** @public */
 export interface HttpFetchQuery {
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | undefined
-    | Array<string | number | boolean | undefined>;
+  [key: string]: string | number | boolean | string[] | number[] | boolean[] | undefined | null;
 }
 
 /**
