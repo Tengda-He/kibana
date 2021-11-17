@@ -644,7 +644,15 @@ export interface HttpFetchOptionsWithPath extends HttpFetchOptions {
 
 // @public (undocumented)
 export interface HttpFetchQuery {
-  [key: string]: string | number | boolean | string[] | number[] | boolean[] | undefined | null;
+  [key: string]: 
+  string | 
+  number | 
+  boolean | 
+  string[] | 
+  number[] | 
+  boolean[] | 
+  undefined | 
+  null;
 }
 
 // @public

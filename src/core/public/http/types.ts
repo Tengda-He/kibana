@@ -205,7 +205,15 @@ export interface HttpRequestInit {
 
 /** @public */
 export interface HttpFetchQuery {
-  [key: string]: string | number | boolean | string[] | number[] | boolean[] | undefined | null;
+  [key: string]:
+  string |
+  number |
+  boolean |
+  string[] |
+  number[] |
+  boolean[] |
+  undefined |
+  null;
 }
 
 /**
