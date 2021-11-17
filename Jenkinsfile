@@ -27,6 +27,7 @@ node {
             stage('Bootstrap') {
                 sh 'yarn add --dev jest-junit'
                 sh 'google-chrome --version'
+                sh 'yarn add chromedriver --detect_chromedriver_version'
                 sh 'yarn kbn bootstrap'
             }
 
