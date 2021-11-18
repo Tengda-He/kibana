@@ -3,7 +3,7 @@ node {
     def kibanaVersion = '6.5.4'
     def scmVars = checkout scm
     sh "env"
-    def imageName = "test-image:${env.BUILD_ID}"
+    def imageName = "${env.JOB_BASE_NAME}-test-image:${env.BUILD_ID}"
     def testImage
 
     stage('Build container image') {
