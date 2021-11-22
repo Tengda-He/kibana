@@ -47,7 +47,7 @@ describe('capabilitiesMixin', () => {
     server.getUiNavLinks = () => [];
     registerMock = jest.fn();
   });
-/* This test is skipped due to Capabilities being moved to a new platform by the Kibana team. Hense the tooling for this test has been deprecated */
+/* This test is skipped due to Capabilities being moved to a new platform. Hense the tooling for this test has been deprecated */
 it.skip('calls capabilities#registerCapabilitiesProvider for each legacy plugin specs', async () => {
     const getPluginSpec = (provider: () => any) => ({
       getUiCapabilitiesProvider: () => provider,
