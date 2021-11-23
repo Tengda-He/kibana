@@ -228,7 +228,7 @@ export class DynamicDllPlugin {
     console.log("In registerDoneHook");
     compiler.hooks.done.tapPromise('DynamicDllPlugin', async (stats) => {
       console.log("needsDLLCompilation: ", stats.compilation.needsDLLCompilation);
-      if (stats.compilation.needsDLLCompilation ) {
+      if (stats.compilation.needsDLLCompilation || stats.compilation.needsDLLCompilation === undefined) {
         // Run the dlls compiler and increment
         // the performed compilations
         //
