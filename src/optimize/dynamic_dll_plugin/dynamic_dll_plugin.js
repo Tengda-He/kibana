@@ -198,6 +198,15 @@ export class DynamicDllPlugin {
           (this.isToForceDLLCreation() && this.performedCompilations === 0);
         this.entryPaths = this.afterCompilationEntryPaths;
 
+        // console logs to debug dll optimization issue
+        console.log('After compilation entry paths: ', this.afterCompilationEntryPaths);
+        console.log('Previous entry paths: ', this.entryPaths);
+        console.log('Does dll bundle exist? ', !!this.dllCompiler.dllsExistsSync());
+        console.log('Number of performedCompilations: ', this.performedCompilations);
+        console.log('Object determining dll compilation : ', compilation.needsDLLCompilation);
+        console.log('compilation object: ', compilation);
+        console.log('compiler object: ', compiler);
+        
         // Only run this info log in the first performed dll compilation
         // per each execution run
         if (this.performedCompilations === 0) {
