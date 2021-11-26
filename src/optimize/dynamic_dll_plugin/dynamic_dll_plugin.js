@@ -199,7 +199,7 @@ export class DynamicDllPlugin {
         compilation.needsDLLCompilation =
           this.afterCompilationEntryPaths !== this.entryPaths ||
           !this.dllCompiler.dllsExistsSync() ||
-          (this.isToForceDLLCreation() && this.performedCompilations === 0);
+          !!(this.isToForceDLLCreation() && this.performedCompilations === 0);
         this.entryPaths = this.afterCompilationEntryPaths;
 
         // console logs to debug dll optimization issue
