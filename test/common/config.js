@@ -49,7 +49,7 @@ export default function () {
         `--optimize.watchPort=${kbnTestConfig.getPort() + 10}`,
         '--optimize.watchPrebuild=true',
         '--status.allowAnonymous=true',
-        '--optimize.enabled=true',
+        '--optimize.enabled=false',
         `--elasticsearch.hosts=${formatUrl(servers.elasticsearch)}`,
         `--elasticsearch.username=${kibanaServerTestUser.username}`,
         `--elasticsearch.password=${kibanaServerTestUser.password}`,
