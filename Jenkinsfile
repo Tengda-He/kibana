@@ -118,6 +118,8 @@ def functionalDynamicParallelSteps(image){
             }
         }
     }
+    parallel ciGroupsMap
+    ciGroupsMap = [:]
     for (int i = 4; i <= 6; i++) {
         def currentCiGroup = "ciGroup${i}";
         def currentStep = i;
