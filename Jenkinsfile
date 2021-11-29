@@ -1,5 +1,4 @@
-node {
-    label 'test'
+node(test) {
     def kibanaVersion = '7.7.1'
     def scmVars = checkout scm
     sh "env"
@@ -94,7 +93,34 @@ node {
 
 def functionalDynamicParallelSteps(image){
     ciGroupsMap = [:]
-    for (int i = 1; i <= 12; i++) {
+    for (int i = 1; i <= 3; i++) {
+        def currentCiGroup = "ciGroup${i}";
+        def currentStep = i;
+        ciGroupsMap["${currentCiGroup}"] = {
+            stage("${currentCiGroup}") {
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "CI_GROUP=${currentCiGroup}",
+                    "GCS_UPLOAD_PREFIX=fake",
+                    "TEST_KIBANA_HOST=localhost",
+                    "TEST_KIBANA_PORT=6610",
+                    "TEST_ES_TRANSPORT_PORT=9403",
+                    "TEST_ES_PORT=9400",
+                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
+                    "JOB=ci${currentStep}",
+                    "CACHE_DIR=${currentCiGroup}"
+                ]) {
+                    image.inside {
+                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
+                    }
+                }
+            }
+        }
+    }
+    parallel ciGroupsMap
+    ciGroupsMap = [:]
+    for (int i = 4; i <= 6; i++) {
         def currentCiGroup = "ciGroup${i}";
         def currentStep = i;
         ciGroupsMap["${currentCiGroup}"] = {
