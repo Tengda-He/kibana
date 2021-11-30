@@ -1,61 +1,125 @@
-#!/bin/groovy
+node('test') {
+    def kibanaVersion = '7.7.1'
+    def scmVars = checkout scm
+    sh "env"
+    def imageName = "${env.BRANCH_NAME}-test-image:${env.BUILD_ID}"
+    def testImage
 
-library 'kibana-pipeline-library'
-kibanaLibrary.load()
-
-kibanaPipeline(timeoutMinutes: 135, checkPrChanges: true) {
-  ciStats.trackBuild {
-    githubPr.withDefaultPrComments {
-      catchError {
-        retryable.enable()
-        parallel([
-          'kibana-intake-agent': workers.intake('kibana-intake', './test/scripts/jenkins_unit.sh'),
-          'x-pack-intake-agent': workers.intake('x-pack-intake', './test/scripts/jenkins_xpack.sh'),
-          'kibana-oss-agent': workers.functional('kibana-oss-tests', { kibanaPipeline.buildOss() }, [
-            // 'oss-firefoxSmoke': kibanaPipeline.functionalTestProcess('kibana-firefoxSmoke', './test/scripts/jenkins_firefox_smoke.sh'),
-            'oss-ciGroup1': kibanaPipeline.ossCiGroupProcess(1),
-            'oss-ciGroup2': kibanaPipeline.ossCiGroupProcess(2),
-            'oss-ciGroup3': kibanaPipeline.ossCiGroupProcess(3),
-            'oss-ciGroup4': kibanaPipeline.ossCiGroupProcess(4),
-            'oss-ciGroup5': kibanaPipeline.ossCiGroupProcess(5),
-            'oss-ciGroup6': kibanaPipeline.ossCiGroupProcess(6),
-            'oss-ciGroup7': kibanaPipeline.ossCiGroupProcess(7),
-            'oss-ciGroup8': kibanaPipeline.ossCiGroupProcess(8),
-            'oss-ciGroup9': kibanaPipeline.ossCiGroupProcess(9),
-            'oss-ciGroup10': kibanaPipeline.ossCiGroupProcess(10),
-            'oss-ciGroup11': kibanaPipeline.ossCiGroupProcess(11),
-            'oss-ciGroup12': kibanaPipeline.ossCiGroupProcess(12),
-            'oss-accessibility': kibanaPipeline.functionalTestProcess('kibana-accessibility', './test/scripts/jenkins_accessibility.sh'),
-            // 'oss-visualRegression': kibanaPipeline.functionalTestProcess('visualRegression', './test/scripts/jenkins_visual_regression.sh'),
-          ]),
-          'kibana-xpack-agent': workers.functional('kibana-xpack-tests', { kibanaPipeline.buildXpack() }, [
-            // 'xpack-firefoxSmoke': kibanaPipeline.functionalTestProcess('xpack-firefoxSmoke', './test/scripts/jenkins_xpack_firefox_smoke.sh'),
-            'xpack-ciGroup1': kibanaPipeline.xpackCiGroupProcess(1),
-            'xpack-ciGroup2': kibanaPipeline.xpackCiGroupProcess(2),
-            'xpack-ciGroup3': kibanaPipeline.xpackCiGroupProcess(3),
-            'xpack-ciGroup4': kibanaPipeline.xpackCiGroupProcess(4),
-            'xpack-ciGroup5': kibanaPipeline.xpackCiGroupProcess(5),
-            'xpack-ciGroup6': kibanaPipeline.xpackCiGroupProcess(6),
-            'xpack-ciGroup7': kibanaPipeline.xpackCiGroupProcess(7),
-            'xpack-ciGroup8': kibanaPipeline.xpackCiGroupProcess(8),
-            'xpack-ciGroup9': kibanaPipeline.xpackCiGroupProcess(9),
-            'xpack-ciGroup10': kibanaPipeline.xpackCiGroupProcess(10),
-            'xpack-accessibility': kibanaPipeline.functionalTestProcess('xpack-accessibility', './test/scripts/jenkins_xpack_accessibility.sh'),
-            'xpack-siemCypress': { processNumber ->
-              whenChanged(['x-pack/legacy/plugins/siem/', 'x-pack/test/siem_cypress/']) {
-                kibanaPipeline.functionalTestProcess('xpack-siemCypress', './test/scripts/jenkins_siem_cypress.sh')(processNumber)
-              }
-            },
-
-            // 'xpack-visualRegression': kibanaPipeline.functionalTestProcess('xpack-visualRegression', './test/scripts/jenkins_xpack_visual_regression.sh'),
-          ]),
-        ])
-      }
+    stage('Build container image') {
+        sh 'ls -l'
+        sh 'docker -v'
+        testImage = docker.build imageName
     }
 
-    if (params.NOTIFY_ON_FAILURE) {
-      slackNotifications.onFailure()
-      kibanaPipeline.sendMail()
+    try {
+        testImage.inside {
+            sh 'uname -a'
+            env.NODE_OPTIONS = '--max_old_space_size=8192'
+            env.TEST_BROWSER_HEADLESS=1
+            env.KIBANA_DIR=sh(script: 'pwd', , returnStdout: true).trim()
+            sh 'which npm'
+            sh 'npm --version'
+            sh 'rm -rf target/junit'
+            sh 'rm -rf junit-test'
+            sh 'mkdir junit-test'
+
+            stage('Bootstrap') {
+                sh 'yarn add --dev jest-junit'
+                sh 'google-chrome --version'
+                sh 'yarn kbn bootstrap'
+            }
+
+            stage('Build test plugins') {
+                sh """
+                    echo " -> building kibana platform plugins"
+                    node scripts/build_kibana_platform_plugins \\
+                        --oss \\
+                        --no-examples \\
+                        --scan-dir "$env.KIBANA_DIR/test/plugin_functional/plugins" \\
+                        --workers 6 \\
+                        --verbose
+                    """
+            }
+
+            stage('Unit Test') {
+                echo "Starting unit test..."
+                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
+
+                if (utResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Jest Tests*.xml'
+            }
+
+            stage('Integration Test') {
+                echo "Start Integration Tests"
+                def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest_integration -u --ci'
+
+                if (itResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Jest Integration Tests*.xml'
+            }
+
+            stage('Plugin Functional Test') {
+                currentBuild.result = 'Success'
+                echo "Start Plugin Functional Test"
+                echo "TEST_BROWSER_HEADLESS $env.TEST_BROWSER_HEADLESS"
+                echo "NODE_OPTIONS $env.NODE_OPTIONS"
+
+                def pluginFtrResult = sh returnStatus: true, script: "CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_tests.js --config test/plugin_functional/config.js"
+
+                if (pluginFtrResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Plugin Functional Tests*.xml'
+            }
+        }
+        stage('Functional Test') {
+            echo "Starting functional test..."
+            functionalDynamicParallelSteps(testImage);
+            junit 'target/junit/ci*/**.xml'
+        }
+    } catch (e) {
+            echo 'This will run only if failed'
+            junit 'target/junit/**/*.xml'
+            currentBuild.result = 'FAILURE'
+            throw e
+    } 
+}
+
+def functionalDynamicParallelSteps(image){
+    ciGroupsMap = [:]
+    for (int i = 1; i <= 12; i++) {
+        def currentCiGroup = "ciGroup${i}";
+        def currentStep = i;
+        ciGroupsMap["${currentCiGroup}"] = {
+            sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
+            sh "mkdir ${env.WORKSPACE}_${currentCiGroup}"
+            stage("${currentCiGroup}") {
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "CI_GROUP=${currentCiGroup}",
+                    "GCS_UPLOAD_PREFIX=fake",
+                    "TEST_KIBANA_HOST=localhost",
+                    "TEST_KIBANA_PORT=6610",
+                    "TEST_ES_TRANSPORT_PORT=9403",
+                    "TEST_ES_PORT=9400",
+                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
+                    "JOB=ci${currentStep}",
+                    "CACHE_DIR=${currentCiGroup}"
+                ]) {
+                    image.inside("-v \'${env.WORKSPACE}_${currentCiGroup}:${env.WORKSPACE}/optimize\'") {
+                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
+                    }
+                }
+                sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
+            }
+        }
     }
-  }
+    parallel ciGroupsMap
 }
