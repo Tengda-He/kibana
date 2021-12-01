@@ -93,10 +93,12 @@ node('test') {
 
 def functionalDynamicParallelSteps(image){
     ciGroupsMap = [:]
-    for (int i = 1; i <= 3; i++) {
+    for (int i = 1; i <= 12; i++) {
         def currentCiGroup = "ciGroup${i}";
         def currentStep = i;
         ciGroupsMap["${currentCiGroup}"] = {
+            sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
+            sh "mkdir ${env.WORKSPACE}_${currentCiGroup}"
             stage("${currentCiGroup}") {
                 withEnv([
                     "TEST_BROWSER_HEADLESS=1",
@@ -111,91 +113,11 @@ def functionalDynamicParallelSteps(image){
                     "JOB=ci${currentStep}",
                     "CACHE_DIR=${currentCiGroup}"
                 ]) {
-                    image.inside {
+                    image.inside("-v \'${env.WORKSPACE}_${currentCiGroup}:${env.WORKSPACE}/optimize\'") {
                         sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
                     }
                 }
-            }
-        }
-    }
-    parallel ciGroupsMap
-    ciGroupsMap = [:]
-    for (int i = 4; i <= 6; i++) {
-        def currentCiGroup = "ciGroup${i}";
-        def currentStep = i;
-        ciGroupsMap["${currentCiGroup}"] = {
-            stage("${currentCiGroup}") {
-                withEnv([
-                    "TEST_BROWSER_HEADLESS=1",
-                    "CI=1",
-                    "CI_GROUP=${currentCiGroup}",
-                    "GCS_UPLOAD_PREFIX=fake",
-                    "TEST_KIBANA_HOST=localhost",
-                    "TEST_KIBANA_PORT=6610",
-                    "TEST_ES_TRANSPORT_PORT=9403",
-                    "TEST_ES_PORT=9400",
-                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
-                    "JOB=ci${currentStep}",
-                    "CACHE_DIR=${currentCiGroup}"
-                ]) {
-                    image.inside {
-                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
-                    }
-                }
-            }
-        }
-    }
-    parallel ciGroupsMap
-    ciGroupsMap = [:]
-    for (int i = 7; i <= 9; i++) {
-        def currentCiGroup = "ciGroup${i}";
-        def currentStep = i;
-        ciGroupsMap["${currentCiGroup}"] = {
-            stage("${currentCiGroup}") {
-                withEnv([
-                    "TEST_BROWSER_HEADLESS=1",
-                    "CI=1",
-                    "CI_GROUP=${currentCiGroup}",
-                    "GCS_UPLOAD_PREFIX=fake",
-                    "TEST_KIBANA_HOST=localhost",
-                    "TEST_KIBANA_PORT=6610",
-                    "TEST_ES_TRANSPORT_PORT=9403",
-                    "TEST_ES_PORT=9400",
-                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
-                    "JOB=ci${currentStep}",
-                    "CACHE_DIR=${currentCiGroup}"
-                ]) {
-                    image.inside {
-                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
-                    }
-                }
-            }
-        }
-    }
-    parallel ciGroupsMap
-     ciGroupsMap = [:]
-    for (int i = 10; i <= 12; i++) {
-        def currentCiGroup = "ciGroup${i}";
-        def currentStep = i;
-        ciGroupsMap["${currentCiGroup}"] = {
-            stage("${currentCiGroup}") {
-                withEnv([
-                    "TEST_BROWSER_HEADLESS=1",
-                    "CI=1",
-                    "CI_GROUP=${currentCiGroup}",
-                    "GCS_UPLOAD_PREFIX=fake",
-                    "TEST_KIBANA_HOST=localhost",
-                    "TEST_KIBANA_PORT=6610",
-                    "TEST_ES_TRANSPORT_PORT=9403",
-                    "TEST_ES_PORT=9400",
-                    "CI_PARALLEL_PROCESS_NUMBER=${currentStep}",
-                    "JOB=ci${currentStep}",
-                    "CACHE_DIR=${currentCiGroup}"
-                ]) {
-                    image.inside {
-                        sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
-                    }
-                }
+                sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
             }
         }
     }

@@ -42,6 +42,7 @@ export default function () {
       sourceArgs: [
         '--no-base-path',
         '--env.name=development',
+        `--optimize.bundleDir=${OPTIMIZE_BUNDLE_DIR}`,
       ],
       serverArgs: [
         '--logging.json=false',
