@@ -85,14 +85,14 @@ export class DynamicDllPlugin {
     this.registerWatchRunHook(compiler);
   }
 
-  registerTasksHooks(compiler) {
+  async registerTasksHooks(compiler) {
     this.logWithMetadata(
       ['info', 'optimize:dynamic_dll_plugin'],
       'Started dynamic dll plugin tasks'
     );
-    this.registerBeforeCompileHook(compiler);
-    this.registerCompilationHook(compiler);
-    this.registerDoneHook(compiler);
+    await this.registerBeforeCompileHook(compiler);
+    await this.registerCompilationHook(compiler);
+    await this.registerDoneHook(compiler);
   }
 
   registerRunHook(compiler) {
@@ -108,6 +108,7 @@ export class DynamicDllPlugin {
   }
 
   registerBeforeCompileHook(compiler) {
+    console.log("In registerBeforeCompileHook");
     compiler.hooks.beforeCompile.tapPromise('DynamicDllPlugin', async ({ normalModuleFactory }) => {
       normalModuleFactory.hooks.factory.tap('DynamicDllPlugin', (actualFactory) => (params, cb) => {
         // This is used in order to avoid the cache for DLL modules
@@ -132,8 +133,11 @@ export class DynamicDllPlugin {
   }
 
   registerCompilationHook(compiler) {
+    console.log("In registerCompilationHook");
     compiler.hooks.compilation.tap('DynamicDllPlugin', (compilation) => {
+      console.log("In compilation tap loop");
       compilation.hooks.needAdditionalPass.tap('DynamicDllPlugin', () => {
+        console.log("In compilation needAdditionalPass loop");
         // Run the procedures in order to execute our dll compilation
         // The process is very straightforward in it's conception:
         //
@@ -195,8 +199,14 @@ export class DynamicDllPlugin {
         compilation.needsDLLCompilation =
           this.afterCompilationEntryPaths !== this.entryPaths ||
           !this.dllCompiler.dllsExistsSync() ||
-          (this.isToForceDLLCreation() && this.performedCompilations === 0);
+          !!(this.isToForceDLLCreation() && this.performedCompilations === 0);
         this.entryPaths = this.afterCompilationEntryPaths;
+
+        // console logs to debug dll optimization issue
+        console.log('Is new and previous entry paths same? ', this.afterCompilationEntryPaths === this.entryPaths);
+        console.log('Does dll bundle exist? ', !!this.dllCompiler.dllsExistsSync());
+        console.log('Number of performedCompilations: ', this.performedCompilations);
+        console.log('Object determining dll compilation : ', compilation.needsDLLCompilation);
 
         // Only run this info log in the first performed dll compilation
         // per each execution run
@@ -215,8 +225,11 @@ export class DynamicDllPlugin {
   }
 
   registerDoneHook(compiler) {
+    console.log("In registerDoneHook");
     compiler.hooks.done.tapPromise('DynamicDllPlugin', async (stats) => {
-      if (stats.compilation.needsDLLCompilation) {
+      console.log("needsDLLCompilation: ", stats.compilation.needsDLLCompilation);
+      if (stats?.compilation?.needsDLLCompilation === undefined || stats.compilation.needsDLLCompilation) {
+        console.log("In needsDLLCompilation if statement");
         // Run the dlls compiler and increment
         // the performed compilations
         //
@@ -224,8 +237,10 @@ export class DynamicDllPlugin {
         // past webpack v4.29.3. For now it is needed so we can log the error
         // otherwise the error log we'll get will be something like: [fatal] [object Object]
         try {
+          console.log("Starting runDLLCompiler function");
           await this.runDLLCompiler(compiler);
         } catch (error) {
+          console.log("Caught runDLLCompiler function error");
           this.logWithMetadata(['error', 'optimize:dynamic_dll_plugin'], error.message);
           throw error;
         }
@@ -239,6 +254,7 @@ export class DynamicDllPlugin {
       if (this.forceDLLCreationFlag) {
         this.forceDLLCreationFlag = false;
       }
+      console.log("")
       this.logWithMetadata(
         ['info', 'optimize:dynamic_dll_plugin'],
         'Finished all dynamic dll plugin tasks'
@@ -315,6 +331,7 @@ export class DynamicDllPlugin {
     // Only enable this for CI builds in order to ensure
     // we have an healthy dll ecosystem.
     if (this.performedCompilations === this.maxCompilations) {
+      console.log("Error max compilation of '", this.maxCompilations, "' has been reached!")
       throw new Error(
         'All the allowed dll compilations were already performed and one more is needed which is not possible'
       );
@@ -325,14 +342,18 @@ export class DynamicDllPlugin {
     const runCompilerErrors = [];
 
     try {
+      console.log("running dllcompiler on entrypaths")
       await this.dllCompiler.run(this.entryPaths);
     } catch (e) {
+      console.log("Caught error running dllcompiler on entrypaths: ", e);
       runCompilerErrors.push(e);
     }
 
     try {
+      console.log("Asserting maximum compilation");
       await this.assertMaxCompilations();
     } catch (e) {
+      console.log("Error asserting maximum compilation: ", e);
       runCompilerErrors.push(e);
     }
 
@@ -346,8 +367,10 @@ export class DynamicDllPlugin {
     this.performedCompilations++;
 
     if (!runCompilerErrors.length) {
+      console.log("No compiler error were found");
       return;
     }
+    console.log("Compiler errors: ", [...runCompilerErrors]);
     throw new Error(runCompilerErrors.join('\n-'));
   }
 }
