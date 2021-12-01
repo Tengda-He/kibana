@@ -47,11 +47,6 @@ export default function ({ getService, loadTestFile }) {
 
     describe('', function () {
       this.tags('ciGroup8');
-      before(async () => {
-        await esArchiver.unload('logstash_functional');
-        await esArchiver.load('empty_kibana');
-        await esArchiver.loadIfNeeded('makelogs');
-      });
 
       loadTestFile(require.resolve('./_index_pattern_filter'));
       loadTestFile(require.resolve('./_scripted_fields_filter'));
