@@ -25,7 +25,6 @@ node('test') {
 
             stage('Bootstrap') {
                 sh 'yarn add --dev jest-junit'
-                sh 'google-chrome --version'
                 sh 'yarn kbn bootstrap'
             }
 
@@ -41,42 +40,42 @@ node('test') {
                     """
             }
 
-            stage('Unit Test') {
-                echo "Starting unit test..."
-                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
+            // stage('Unit Test') {
+            //     echo "Starting unit test..."
+            //     def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
 
-                if (utResult != 0) {
-                    currentBuild.result = 'FAILURE'
-                }
+            //     if (utResult != 0) {
+            //         currentBuild.result = 'FAILURE'
+            //     }
 
-                junit 'target/junit/TEST-Jest Tests*.xml'
-            }
+            //     junit 'target/junit/TEST-Jest Tests*.xml'
+            // }
 
-            stage('Integration Test') {
-                echo "Start Integration Tests"
-                def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest_integration -u --ci'
+            // stage('Integration Test') {
+            //     echo "Start Integration Tests"
+            //     def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest_integration -u --ci'
 
-                if (itResult != 0) {
-                    currentBuild.result = 'FAILURE'
-                }
+            //     if (itResult != 0) {
+            //         currentBuild.result = 'FAILURE'
+            //     }
 
-                junit 'target/junit/TEST-Jest Integration Tests*.xml'
-            }
+            //     junit 'target/junit/TEST-Jest Integration Tests*.xml'
+            // }
 
-            stage('Plugin Functional Test') {
-                currentBuild.result = 'Success'
-                echo "Start Plugin Functional Test"
-                echo "TEST_BROWSER_HEADLESS $env.TEST_BROWSER_HEADLESS"
-                echo "NODE_OPTIONS $env.NODE_OPTIONS"
+            // stage('Plugin Functional Test') {
+            //     currentBuild.result = 'Success'
+            //     echo "Start Plugin Functional Test"
+            //     echo "TEST_BROWSER_HEADLESS $env.TEST_BROWSER_HEADLESS"
+            //     echo "NODE_OPTIONS $env.NODE_OPTIONS"
 
-                def pluginFtrResult = sh returnStatus: true, script: "CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_tests.js --config test/plugin_functional/config.js"
+            //     def pluginFtrResult = sh returnStatus: true, script: "CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_tests.js --config test/plugin_functional/config.js"
 
-                if (pluginFtrResult != 0) {
-                    currentBuild.result = 'FAILURE'
-                }
+            //     if (pluginFtrResult != 0) {
+            //         currentBuild.result = 'FAILURE'
+            //     }
 
-                junit 'target/junit/TEST-Plugin Functional Tests*.xml'
-            }
+            //     junit 'target/junit/TEST-Plugin Functional Tests*.xml'
+            // }
         }
         stage('Functional Test') {
             echo "Starting functional test..."
