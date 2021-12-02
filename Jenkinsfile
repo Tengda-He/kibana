@@ -97,8 +97,8 @@ def functionalDynamicParallelSteps(image){
         def currentCiGroup = "ciGroup${i}";
         def currentStep = i;
         ciGroupsMap["${currentCiGroup}"] = {
-            sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
-            sh "mkdir ${env.WORKSPACE}_${currentCiGroup}"
+            sh "rm -rf ${env.WORKSPACE}/.optimize/${currentCiGroup}"
+            sh "mkdir -p ${env.WORKSPACE}/.optimize/${currentCiGroup}"
             stage("${currentCiGroup}") {
                 withEnv([
                     "TEST_BROWSER_HEADLESS=1",
@@ -113,11 +113,11 @@ def functionalDynamicParallelSteps(image){
                     "JOB=ci${currentStep}",
                     "CACHE_DIR=${currentCiGroup}"
                 ]) {
-                    image.inside("-v \'${env.WORKSPACE}_${currentCiGroup}:${env.WORKSPACE}/optimize\'") {
+                    image.inside("-v \'${env.WORKSPACE}/.optimize/${currentCiGroup}:${env.WORKSPACE}/optimize\'") {
                         sh "node scripts/functional_tests.js --config test/functional/config.js --include ${currentCiGroup}"
                     }
                 }
-                sh "rm -rf ${env.WORKSPACE}_${currentCiGroup}"
+                sh "rm -rf ${env.WORKSPACE}/.optimize/${currentCiGroup}"
             }
         }
     }
