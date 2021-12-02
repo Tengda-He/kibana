@@ -98,7 +98,7 @@ def functionalDynamicParallelSteps(image){
         def currentStep = i;
         ciGroupsMap["${currentCiGroup}"] = {
             sh "rm -rf ${env.WORKSPACE}/.optimize/${currentCiGroup}"
-            sh "mkdir ${env.WORKSPACE}/.optimize/${currentCiGroup}"
+            sh "mkdir -p ${env.WORKSPACE}/.optimize/${currentCiGroup}"
             stage("${currentCiGroup}") {
                 withEnv([
                     "TEST_BROWSER_HEADLESS=1",
