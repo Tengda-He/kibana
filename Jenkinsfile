@@ -1,5 +1,4 @@
-node {
-    label 'test'
+node("test") {
     def kibanaVersion = '6.5.4'
     def scmVars = checkout scm
     sh "env"
