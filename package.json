@@ -224,7 +224,7 @@
     "uglifyjs-webpack-plugin": "^1.2.7",
     "ui-select": "0.19.6",
     "url-loader": "0.5.9",
-    "uuid": "3.0.1",
+    "uuid": "^7.0.0",
     "val-loader": "^1.1.0",
     "validate-npm-package-name": "2.2.2",
     "vega-lib": "^3.3.1",

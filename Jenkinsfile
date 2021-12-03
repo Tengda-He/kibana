@@ -29,16 +29,16 @@ node("test") {
                 sh 'yarn kbn bootstrap'
             }
 
-            // stage('Unit Test') {
-            //     echo "Starting Unit Test..."
-            //     def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
+            stage('Unit Test') {
+                echo "Starting Unit Test..."
+                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
 
-            //     if (utResult != 0) {
-            //         currentBuild.result = 'FAILURE'
-            //     }
+                if (utResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
                 
-            //     junit 'target/junit/TEST-Jest Tests*.xml'
-            // }
+                junit 'target/junit/TEST-Jest Tests*.xml'
+            }
 
             stage('Integration Test') {
                 echo "Start Integration Tests"
