@@ -29,6 +29,18 @@ node('test') {
                 sh 'yarn kbn bootstrap'
             }
 
+            stage("Run Elasticsearch") {
+                sh "curl https://storage.googleapis.com/kibana-ci-es-snapshots-permanent/7.4.2/elasticsearch-oss-7.4.2-SNAPSHOT-linux-x86_64.tar.gz --output elasticsearch.tar.gz"
+                echo "Starting Elasticsearch..."
+                sh "tar -xf elasticsearch.tar.gz"
+                sh "./elasticsearch-7.4.2-SNAPSHOT/bin/elasticsearch &"
+            }
+            
+            stage("Run Kibana") {
+                echo "Starting Kibana..."
+                sh "./bin/kibana --no-optimize --no-base-path 2>&1 | tee kibana.log &"
+            }
+
             stage('Unit Test') {
                 echo "Starting unit test..."
                 def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
