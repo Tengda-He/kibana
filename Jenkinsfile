@@ -28,7 +28,19 @@ node('test') {
                 sh 'google-chrome --version'
                 sh 'yarn kbn bootstrap'
             }
-        }
+
+            stage('Unit Test') {
+                echo "Starting unit test..."
+                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
+
+                if (utResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
+
+                junit 'target/junit/TEST-Jest Tests*.xml'
+            }
+
+        }     
     } catch (e) {
         echo 'This will run only if failed'
         currentBuild.result = 'FAILURE'
