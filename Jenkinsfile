@@ -30,7 +30,7 @@ node('test') {
             }
 
             stage("Run Elasticsearch") {
-                sh "curl https://storage.googleapis.com/kibana-ci-es-snapshots-permanent/7.4.2/elasticsearch-oss-7.4.2-SNAPSHOT-linux-x86_64.tar.gz --output elasticsearch.tar.gz"
+                sh "curl https://storage.googleapis.com/kibana-ci-es-snapshots-permanent/6.7.2/elasticsearch-oss-6.7.2-SNAPSHOT-linux-x86_64.tar.gz --output elasticsearch.tar.gz"
                 echo "Starting Elasticsearch..."
                 sh "tar -xf elasticsearch.tar.gz"
                 sh "./elasticsearch-7.4.2-SNAPSHOT/bin/elasticsearch &"
