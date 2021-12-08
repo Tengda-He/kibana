@@ -24,31 +24,71 @@ node("test") {
             sh 'mkdir junit-test'
 
             stage('Bootstrap') {
-                sh 'yarn add --dev jest-junit@10.0.0'
-                sh 'google-chrome --version'
+                sh 'yarn add --dev jest-junit@7'
+                sh 'google-chrome -v'
+                sh 'yarn add chromedriver@79'
                 sh 'yarn kbn bootstrap'
             }
 
-            stage('Unit Test') {
-                echo "Starting Unit Test..."
-                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
+            // stage('Unit Test') {
+            //     echo "Starting Unit Test..."
+            //     def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
 
-                if (utResult != 0) {
-                    currentBuild.result = 'FAILURE'
-                }
+            //     if (utResult != 0) {
+            //         currentBuild.result = 'FAILURE'
+            //     }
                 
-                junit 'target/junit/TEST-Jest Tests*.xml'
+            //     junit 'target/junit/TEST-Jest Tests*.xml'
+            // }
+
+            // stage('Integration Test') {
+            //     echo "Start Integration Tests"
+            //     def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest_integration -u --ci'
+
+            //     if (itResult != 0) {
+            //         currentBuild.result = 'FAILURE'
+            //     }
+
+            //     junit 'target/junit/TEST-Jest Integration Tests*.xml'
+            // }
+            
+            stage("Run Elasticsearch") {
+                sh "curl https://storage.googleapis.com/kibana-ci-es-snapshots-permanent/6.8.10/elasticsearch-6.8.10-SNAPSHOT.tar.gz --output elasticsearch.tar.gz"
+                echo "Starting Elasticsearch..."
+                sh "tar -xf elasticsearch.tar.gz"
+                sh "./elasticsearch-6.8.10-SNAPSHOT/bin/elasticsearch & "
             }
+            
+            stage("Run Kibana") {
+                echo "Starting Kibana..."
+                sh "./bin/kibana --no-base-path 2>&1 | tee kibana.log & "
+            }
+            
+            stage("Run Functional Test") {
+                sh "sleep 60"
+                sh "curl localhost:9200"
+                sh "curl localhost:5601"
+                echo "Start Functional Tests"
+                
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "TEST_ES_PORT=9200",
+                    "TEST_KIBANA_PORT=5601",
+                    "TEST_KIBANA_PROTOCOL=http",
+                    "TEST_ES_PROTOCOL=http",
+                    "TEST_KIBANA_HOSTNAME=localhost",
+                    "TEST_ES_HOSTNAME=localhost"
+                ]) {
+                
+                    def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_test_runner'
+    
+                    if (utResult != 0) {
+                        currentBuild.result = 'FAILURE'
+                    }
 
-            stage('Integration Test') {
-                echo "Start Integration Tests"
-                def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest_integration -u --ci'
-
-                if (itResult != 0) {
-                    currentBuild.result = 'FAILURE'
+                    junit 'target/junit/TEST-Jest Functional Tests*.xml'
                 }
-
-                junit 'target/junit/TEST-Jest Integration Tests*.xml'
             }
         }
     } catch (e) {
