@@ -11,7 +11,7 @@ unzip libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrand
 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget openjdk-8-jre && \
 rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && apt-get update && apt-get install -y rsync jq bsdtar --no-install-recommends && wget -O /tmp/chrome-linux.zip "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F706915%2Fchrome-linux.zip?generation=1571324979333057&alt=media" && unzip /tmp/chrome-linux.zip && cp /tmp/chrome-linux/chrome /usr/bin/google-chrome && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && apt-get update && apt-get install -y rsync jq bsdtar --no-install-recommends && wget -O /tmp/chrome-linux.zip "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F706915%2Fchrome-linux.zip?generation=1571324979333057&alt=media" && unzip /tmp/chrome-linux.zip -d /tmp/chrome-linux && cp /tmp/chrome-linux/chrome-linux/chrome /usr/bin/google-chrome && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update && apt-get install -y python-pip
 
