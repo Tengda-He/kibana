@@ -25,8 +25,8 @@ node("test") {
 
             stage('Bootstrap') {
                 sh 'yarn add --dev jest-junit@7'
-                sh 'google-chrome -v'
-                sh 'yarn add chromedriver@79'
+                sh 'which google-chrome'
+                sh 'which chromedriver'
                 sh 'yarn kbn bootstrap'
             }
 
@@ -52,11 +52,18 @@ node("test") {
             //     junit 'target/junit/TEST-Jest Integration Tests*.xml'
             // }
             
-            stage("Run Elasticsearch") {
-                sh "curl https://storage.googleapis.com/kibana-ci-es-snapshots-permanent/6.8.10/elasticsearch-6.8.10-SNAPSHOT.tar.gz --output elasticsearch.tar.gz"
-                echo "Starting Elasticsearch..."
-                sh "tar -xf elasticsearch.tar.gz"
-                sh "./elasticsearch-6.8.10-SNAPSHOT/bin/elasticsearch & "
+            stage('Run Elastic Search'){
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'bfs-jenkins',
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    sh 'aws s3 cp s3://kibana.bfs.vendor/aes/elasticsearch/elasticsearch-oss-6.5.4.tar.gz ./'
+                    echo 'Start Elasticsearch'
+                    sh 'tar -xf elasticsearch-oss-6.5.4.tar.gz'
+                    sh './elasticsearch-6.5.4/bin/elasticsearch &'
+                } 
             }
             
             stage("Run Kibana") {
