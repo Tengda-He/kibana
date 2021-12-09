@@ -43,6 +43,11 @@ node('test') {
                 } 
             }
 
+            stage("Run Kibana") {
+                echo "Starting Kibana..."
+                sh "./bin/kibana --no-optimize --no-base-path 2>&1 | tee kibana.log &"
+            }
+
             stage('Unit Test') {
                 echo "Starting unit test..."
                 def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake yarn test:jest -u --ci'
