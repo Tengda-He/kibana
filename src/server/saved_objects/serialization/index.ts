@@ -22,7 +22,7 @@
  * the raw document format as stored in ElasticSearch.
  */
 
-import uuid from 'uuid';
+import { v1 as uuidv1 } from 'uuid';
 import { SavedObjectsSchema } from '../schema';
 
 /**
@@ -145,7 +145,7 @@ export class SavedObjectsSerializer {
   public generateRawId(namespace: string | undefined, type: string, id?: string) {
     const namespacePrefix =
       namespace && !this.schema.isNamespaceAgnostic(type) ? `${namespace}:` : '';
-    return `${namespacePrefix}${type}:${id || uuid.v1()}`;
+    return `${namespacePrefix}${type}:${id || uuidv1()}`;
   }
 
   private trimIdPrefix(namespace: string | undefined, type: string, id: string) {
