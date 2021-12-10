@@ -25,32 +25,32 @@ node("test") {
 
             stage('Bootstrap') {
                 sh 'yarn add --dev jest-junit@7'
+                sh 'yarn add --dev chromedriver@79'
                 sh 'which google-chrome'
-                sh 'which chromedriver'
                 sh 'yarn kbn bootstrap'
             }
 
-            // stage('Unit Test') {
-            //     echo "Starting Unit Test..."
-            //     def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
+            stage('Unit Test') {
+                echo "Starting Unit Test..."
+                def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest -u --ci'
 
-            //     if (utResult != 0) {
-            //         currentBuild.result = 'FAILURE'
-            //     }
+                if (utResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
                 
-            //     junit 'target/junit/TEST-Jest Tests*.xml'
-            // }
+                junit 'target/junit/TEST-Jest Tests*.xml'
+            }
 
-            // stage('Integration Test') {
-            //     echo "Start Integration Tests"
-            //     def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest_integration -u --ci'
+            stage('Integration Test') {
+                echo "Start Integration Tests"
+                def itResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/jest_integration -u --ci'
 
-            //     if (itResult != 0) {
-            //         currentBuild.result = 'FAILURE'
-            //     }
+                if (itResult != 0) {
+                    currentBuild.result = 'FAILURE'
+                }
 
-            //     junit 'target/junit/TEST-Jest Integration Tests*.xml'
-            // }
+                junit 'target/junit/TEST-Jest Integration Tests*.xml'
+            }
             
             stage('Run Elastic Search'){
                 withCredentials([[
