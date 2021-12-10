@@ -24,10 +24,10 @@ node("test") {
             sh 'mkdir junit-test'
 
             stage('Bootstrap') {
+                sh 'yarn kbn bootstrap'
                 sh 'yarn add --dev jest-junit@7'
                 sh 'which google-chrome'
                 sh 'which chromedriver'
-                sh 'yarn kbn bootstrap'
             }
 
             // stage('Unit Test') {
