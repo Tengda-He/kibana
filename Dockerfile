@@ -19,6 +19,10 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 && unzip awscliv2.zip \
 && ./aws/install
 
+RUN aws s3 cp s3://kibana.bfs.vendor/aes/chrome/google-chrome-stable_79.0.3945.117-1_amd64.deb ./tmp/google-chrome.deb \
+&& apt install -y --allow-downgrades  /tmp/google-chrome.deb \
+&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 RUN groupadd -r kibana && useradd -r -g kibana kibana && mkdir /home/kibana && chown kibana:kibana /home/kibana
 
 USER kibana
