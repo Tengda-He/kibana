@@ -70,6 +70,33 @@ node('test') {
                 junit 'target/junit/TEST-Jest Integration Tests*.xml'
             }
 
+             stage("Run Functional Test") {
+                sh "sleep 120"
+                sh "curl localhost:9200"
+                sh "curl localhost:5601"
+                echo "Start Functional Tests"
+                
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "TEST_ES_PORT=9200",
+                    "TEST_KIBANA_PORT=5601",
+                    "TEST_KIBANA_PROTOCOL=http",
+                    "TEST_ES_PROTOCOL=http",
+                    "TEST_KIBANA_HOSTNAME=localhost",
+                    "TEST_ES_HOSTNAME=localhost"
+                ]) {
+                
+                    def utResult = sh returnStatus: true, script: 'CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_test_runner'
+    
+                    if (utResult != 0) {
+                        currentBuild.result = 'FAILURE'
+                    }
+
+                    junit 'target/junit/ci*/**.xml'
+                }
+            }
+
         }     
     } catch (e) {
         echo 'This will run only if failed'
