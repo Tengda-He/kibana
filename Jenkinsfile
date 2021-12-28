@@ -93,13 +93,14 @@ node('test') {
                         currentBuild.result = 'FAILURE'
                     }
 
-                    junit 'target/junit/ci*/**.xml'
+                    junit 'target/junit/TEST-UI Functional Tests.xml'
                 }
             }
 
         }     
     } catch (e) {
         echo 'This will run only if failed'
+        junit 'target/junit/TEST-UI Functional Tests.xml'
         currentBuild.result = 'FAILURE'
         throw e
     }
