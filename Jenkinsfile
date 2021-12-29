@@ -76,6 +76,17 @@ node('test') {
                 echo "TEST_BROWSER_HEADLESS $env.TEST_BROWSER_HEADLESS"
                 echo "NODE_OPTIONS $env.NODE_OPTIONS"
 
+                withEnv([
+                    "TEST_BROWSER_HEADLESS=1",
+                    "CI=1",
+                    "TEST_ES_PORT=9200",
+                    "TEST_KIBANA_PORT=5601",
+                    "TEST_KIBANA_PROTOCOL=http",
+                    "TEST_ES_PROTOCOL=http",
+                    "TEST_KIBANA_HOSTNAME=localhost",
+                    "TEST_ES_HOSTNAME=localhost"
+                ]) {
+
                 def pluginFtrResult = sh returnStatus: true, script: "CI=1 GCS_UPLOAD_PREFIX=fake node scripts/functional_test_runner.js --config test/plugin_functional/config.js"
 
                 if (pluginFtrResult != 0) {
@@ -83,6 +94,8 @@ node('test') {
                 }
 
                 junit 'target/junit/TEST-Plugin Functional Tests*.xml'
+                
+                }
             }
 
              stage("Run Functional Test") {
