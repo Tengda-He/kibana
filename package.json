@@ -313,7 +313,6 @@
     "@types/browserslist-useragent": "^3.0.0",
     "@types/chance": "^1.0.0",
     "@types/cheerio": "^0.22.10",
-    "@types/chromedriver": "^2.38.0",
     "@types/classnames": "^2.2.9",
     "@types/color": "^3.0.0",
     "@types/d3": "^3.5.43",
