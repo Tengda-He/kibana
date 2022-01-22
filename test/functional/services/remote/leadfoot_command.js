@@ -36,9 +36,9 @@ async function attemptToCreateCommand(log, server, driverApi) {
     browserOptions = {
       chromeOptions: {
         args: [
-         "--headless", 
-         "--no-sandbox", 
-         "--disable-dev-shm-usage"
+         '--headless', 
+         '--no-sandbox', 
+         '--disable-dev-shm-usage"
         ]
       }
     };
