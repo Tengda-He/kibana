@@ -38,7 +38,7 @@ async function attemptToCreateCommand(log, server, driverApi) {
         args: [
           'headless',
           'disable-gpu',
-          'no-sandbox',
+          '--no-sandbox',
           '--enable-features=NetworkService,NetworkServiceInProcess',
           '--disable-dev-shm-usage',
         ]
