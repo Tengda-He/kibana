@@ -341,6 +341,7 @@
     "@types/json-stable-stringify": "^1.0.32",
     "@types/json5": "^0.0.30",
     "@types/license-checker": "15.0.0",
+    "@types/chromedriver": "^2.38.0",
     "@types/listr": "^0.14.0",
     "@types/lodash": "^3.10.1",
     "@types/lodash.clonedeep": "^4.5.4",
