@@ -292,7 +292,6 @@
     "@types/sinon": "^5.0.1",
     "@types/strip-ansi": "^3.0.0",
     "@types/styled-components": "^3.0.1",
-    "@types/chromedriver": "^2.38.0",
     "@types/supertest": "^2.0.5",
     "@types/type-detect": "^4.0.1",
     "@types/uuid": "^3.4.4",
