@@ -38,7 +38,7 @@ async function attemptToCreateCommand(log, server, driverApi) {
         args: [
          '--headless', 
          '--no-sandbox', 
-         '--disable-dev-shm-usage"
+         '--disable-dev-shm-usage'
         ]
       }
     };
