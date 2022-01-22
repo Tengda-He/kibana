@@ -18,6 +18,7 @@
  */
 
 import { initLeadfootCommand } from './leadfoot_command';
+import { createRemoteInterceptors } from './interceptors';
 
 import { BrowserDriverApi } from './browser_driver_api';
 
@@ -38,6 +39,7 @@ export async function RemoteProvider({ getService }) {
   await browserDriverApi.start();
 
   const { command } = await initLeadfootCommand({ log, browserDriverApi: browserDriverApi });
+  const interceptors = createRemoteInterceptors(command);
  
 
   log.info('Remote initialized');
@@ -64,6 +66,10 @@ export async function RemoteProvider({ getService }) {
         // prevent the remote from being treated like a promise by
         // hiding it's promise-like properties
         return undefined;
+      }
+      
+      if (interceptors.hasOwnProperty(prop)) {
+        return interceptors[prop];
       }
 
      
