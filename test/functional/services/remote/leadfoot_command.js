@@ -36,7 +36,7 @@ async function attemptToCreateCommand(log, server, driverApi) {
     browserOptions = {
       chromeOptions: {
         args: [
-          'headless',
+          '--headless',
           'disable-gpu',
           '--no-sandbox',
           '--enable-features=NetworkService,NetworkServiceInProcess',
