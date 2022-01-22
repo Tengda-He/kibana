@@ -292,6 +292,7 @@
     "@types/sinon": "^5.0.1",
     "@types/strip-ansi": "^3.0.0",
     "@types/styled-components": "^3.0.1",
+    "@types/chromedriver": "^2.38.0"
     "@types/supertest": "^2.0.5",
     "@types/type-detect": "^4.0.1",
     "@types/uuid": "^3.4.4",
@@ -303,7 +304,7 @@
     "chance": "1.0.10",
     "cheerio": "0.22.0",
     "chokidar": "1.6.0",
-    "chromedriver": "^79.0.0",
+    "chromedriver": "^94",
     "classnames": "2.2.5",
     "dedent": "^0.7.0",
     "enzyme": "3.2.0",
