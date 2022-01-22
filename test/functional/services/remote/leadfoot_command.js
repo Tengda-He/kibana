@@ -33,16 +33,16 @@ async function attemptToCreateCommand(log, server, driverApi) {
 
   let browserOptions = {};
   if (process.env.TEST_BROWSER_HEADLESS) {
-    browserOptions = {
-      chromeOptions: {
+    browserOptions = { 
+      chromeOptions: { 
         args: [
-          '--headless',
-          'disable-gpu',
-          '--no-sandbox',
-          '--enable-features=NetworkService,NetworkServiceInProcess',
+          'headless', 
+          'disable-gpu', 
+          'no-sandbox', 
+          '--enable-features=NetworkService,NetworkServiceInProcess', 
           '--disable-dev-shm-usage',
-        ]
-      }
+        ] 
+      } 
     };
   }
   const session = await server.createSession(browserOptions, driverApi.getRequiredCapabilities());
