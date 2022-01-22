@@ -19,7 +19,6 @@
 
 import { loadTracer } from '../load_tracer';
 import { createAsyncInstance, isAsyncInstance } from './async_instance';
-import { createVerboseInstance } from './verbose_instance';
 
 export class ProviderCollection {
   constructor(log, providers) {
@@ -104,15 +103,7 @@ export class ProviderCollection {
         if (instance && typeof instance.then === 'function') {
           instance = createAsyncInstance(type, name, instance);
         }
-        if (name !== '__leadfoot__' && name !== 'log' && name !== 'config' && instance && typeof instance === 'object') {
-          instance = createVerboseInstance(
-            this._log,
-            type === 'PageObject' ? `PageObjects.${name}` : name,
-            instance
-          );
-        }
-        
-
+       
         instances.set(provider, instance);
       }
 
