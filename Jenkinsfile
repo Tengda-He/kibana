@@ -45,7 +45,7 @@ node('test') {
             
             stage("Run Kibana") {
                 echo "Starting Kibana..."
-                sh "./bin/kibana --no-base-path 2>&1 | tee kibana.log &"
+                sh "./bin/kibana --no-optimize --no-base-path 2>&1 | tee kibana.log &"
             }
 
             stage('Unit Test') {

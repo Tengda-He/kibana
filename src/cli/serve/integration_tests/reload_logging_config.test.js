@@ -49,7 +49,7 @@ function setLoggingJson(enabled) {
   fs.writeFileSync(testConfigFile, yaml);
 }
 
-describe('Server logging configuration', function () {
+describe.skip('Server logging configuration', function () {
   let child;
   let isJson;
 
