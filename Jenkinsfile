@@ -1,5 +1,5 @@
 node("test") {
-    def kibanaVersion = '6.5.4'
+    def kibanaVersion = '6.3.2'
     def scmVars = checkout scm
     sh "env"
     def imageName = "${env.BRANCH_NAME}-test-image:${env.BUILD_ID}"
