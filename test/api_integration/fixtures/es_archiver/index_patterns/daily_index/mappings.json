@@ -9,12 +9,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "Jan01": {
-          "type": "boolean"
-        },
-        "@timestamp": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "Jan01": {
+            "type": "boolean"
+          },
+          "@timestamp": {
+            "type": "date"
+          }
         }
       }
     }
@@ -32,12 +34,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "Jan02": {
-          "type": "boolean"
-        },
-        "@timestamp": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "Jan02": {
+            "type": "boolean"
+          },
+          "@timestamp": {
+            "type": "date"
+          }
         }
       }
     }

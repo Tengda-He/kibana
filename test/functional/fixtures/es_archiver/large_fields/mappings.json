@@ -2,13 +2,6 @@
   "type": "index",
   "value": {
     "index": "testhuge",
-    "mappings": {
-      "properties": {
-        "date": {
-          "type": "date"
-        }
-      }
-    },
     "settings": {
       "index": {
         "mapping": {
@@ -16,8 +9,17 @@
             "limit": "50000"
           }
         },
-        "number_of_replicas": "1",
-        "number_of_shards": "5"
+        "number_of_shards": "5",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "test": {
+        "properties": {
+          "date": {
+            "type": "date"
+          }
+        }
       }
     }
   }

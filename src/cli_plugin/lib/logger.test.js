@@ -1,21 +1,15 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import sinon from 'sinon';
-
-import { Logger } from './logger';
+import Logger from './logger';
 
 describe('kibana cli', function () {
+
   describe('plugin installer', function () {
+
     describe('logger', function () {
       let logger;
 
       describe('logger.log', function () {
+
         beforeEach(function () {
           sinon.stub(process.stdout, 'write');
         });
@@ -85,9 +79,11 @@ describe('kibana cli', function () {
 
           expect(process.stdout.write.callCount).toBe(0);
         });
+
       });
 
       describe('logger.error', function () {
+
         beforeEach(function () {
           sinon.stub(process.stderr, 'write');
         });
@@ -119,7 +115,11 @@ describe('kibana cli', function () {
           logger.error(message);
           expect(process.stderr.write.callCount).toBe(0);
         });
+
       });
+
     });
+
   });
+
 });

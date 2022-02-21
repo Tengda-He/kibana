@@ -2,26 +2,20 @@
   "type": "index",
   "value": {
     "index": "shakespeare",
-    "mappings": {
-      "properties": {
-        "line_id": {
-          "type": "integer"
-        },
-        "play_name": {
-          "type": "keyword"
-        },
-        "speaker": {
-          "type": "keyword"
-        },
-        "speech_number": {
-          "type": "integer"
-        }
-      }
-    },
     "settings": {
       "index": {
-        "number_of_replicas": "1",
-        "number_of_shards": "5"
+        "number_of_shards": "5",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "doc": {
+        "properties": {
+          "speaker": {"type": "keyword"},
+          "play_name": {"type": "keyword"},
+          "line_id": {"type": "integer"},
+          "speech_number": {"type": "integer"}
+        }
       }
     }
   }

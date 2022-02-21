@@ -1,16 +1,24 @@
 /*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
-import { resolve } from 'path';
-
 import dedent from 'dedent';
-import { ToolingLog, pickLevelFromFlags } from '@kbn/dev-utils';
-import { EsVersion } from '../../../functional_test_runner';
+import { createToolingLog, pickLevelFromFlags } from '@kbn/dev-utils';
 
 const options = {
   help: { desc: 'Display this menu and exit.' },
@@ -22,7 +30,7 @@ const options = {
     arg: '<snapshot|source>',
     choices: ['snapshot', 'source'],
     desc: 'Build Elasticsearch from source or run from snapshot.',
-    defaultHelp: 'Default: $TEST_ES_FROM or snapshot',
+    default: 'snapshot',
   },
   'kibana-install-dir': {
     arg: '<dir>',
@@ -34,32 +42,8 @@ const options = {
     desc: 'Pattern to select which tests to run.',
   },
   updateBaselines: {
-    desc: 'Replace baseline screenshots with whatever is generated from the test.',
-  },
-  updateSnapshots: {
-    desc: 'Replace inline and file snapshots with whatever is generated from the test.',
-  },
-  u: {
-    desc: 'Replace both baseline screenshots and snapshots',
-  },
-  include: {
-    arg: '<file>',
-    desc: 'Files that must included to be run, can be included multiple times.',
-  },
-  exclude: {
-    arg: '<file>',
-    desc: 'Files that must NOT be included to be run, can be included multiple times.',
-  },
-  'include-tag': {
-    arg: '<tag>',
-    desc: 'Tags that suites must include to be run, can be included multiple times.',
-  },
-  'exclude-tag': {
-    arg: '<tag>',
-    desc: 'Tags that suites must NOT include to be run, can be included multiple times.',
-  },
-  'assert-none-excluded': {
-    desc: 'Exit with 1/0 based on if any test is excluded with the current set of tags.',
+    desc:
+      'Replace baseline screenshots with whatever is generated from the test.',
   },
   verbose: { desc: 'Log everything.' },
   debug: { desc: 'Run in debug mode.' },
@@ -69,16 +53,16 @@ const options = {
 
 export function displayHelp() {
   const helpOptions = Object.keys(options)
-    .filter((name) => name !== '_')
-    .map((name) => {
+    .filter(name => name !== '_')
+    .map(name => {
       const option = options[name];
       return {
         ...option,
         usage: `${name} ${option.arg || ''}`,
-        default: option.defaultHelp || '',
+        default: option.default ? `Default: ${option.default}` : '',
       };
     })
-    .map((option) => {
+    .map(option => {
       return `--${option.usage.padEnd(28)} ${option.desc} ${option.default}`;
     })
     .join(`\n      `);
@@ -110,53 +94,23 @@ export function processOptions(userOptions, defaultConfigPaths) {
     }
   }
 
-  if (!userOptions.esFrom) {
-    userOptions.esFrom = process.env.TEST_ES_FROM || 'snapshot';
-  }
-
-  if (userOptions['kibana-install-dir']) {
-    userOptions.installDir = userOptions['kibana-install-dir'];
-    delete userOptions['kibana-install-dir'];
-  }
-
-  userOptions.suiteFiles = {
-    include: [].concat(userOptions.include || []),
-    exclude: [].concat(userOptions.exclude || []),
-  };
-  delete userOptions.include;
-  delete userOptions.exclude;
-
-  userOptions.suiteTags = {
-    include: [].concat(userOptions['include-tag'] || []),
-    exclude: [].concat(userOptions['exclude-tag'] || []),
-  };
-  delete userOptions['include-tag'];
-  delete userOptions['exclude-tag'];
-
-  userOptions.assertNoneExcluded = !!userOptions['assert-none-excluded'];
-  delete userOptions['assert-none-excluded'];
-
   function createLogger() {
-    return new ToolingLog({
-      level: pickLevelFromFlags(userOptions),
-      writeTo: process.stdout,
-    });
+    const log = createToolingLog(pickLevelFromFlags(userOptions));
+    log.pipe(process.stdout);
+    return log;
   }
 
   return {
     ...userOptions,
-    configs: configs.map((c) => resolve(c)),
+    configs,
     createLogger,
     extraKbnOpts: userOptions._,
-    esVersion: EsVersion.getDefault(),
   };
 }
 
 function validateOptions(userOptions) {
   Object.entries(userOptions).forEach(([key, val]) => {
-    if (key === '_' || key === 'suiteTags') {
-      return;
-    }
+    if (key === '_') return;
 
     // Validate flags passed
     if (options[key] === undefined) {
@@ -171,7 +125,9 @@ function validateOptions(userOptions) {
       // Validate enum flags
       (options[key].choices && !options[key].choices.includes(val))
     ) {
-      throw new Error(`functional_tests: invalid argument [${val}] to option [${key}]`);
+      throw new Error(
+        `functional_tests: invalid argument [${val}] to option [${key}]`
+      );
     }
   });
 }

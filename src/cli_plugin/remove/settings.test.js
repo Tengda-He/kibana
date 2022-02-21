@@ -1,47 +1,103 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import { createAbsolutePathSerializer } from '@kbn/dev-utils';
-
+import { fromRoot } from '../../utils';
 import { parse } from './settings';
 
-const command = 'plugin name';
+describe('kibana cli', function () {
 
-expect.addSnapshotSerializer(createAbsolutePathSerializer());
+  describe('plugin installer', function () {
 
-it('produces the defaults', () => {
-  expect(parse(command, {})).toMatchInlineSnapshot(`
-    Object {
-      "config": "",
-      "plugin": "plugin name",
-      "pluginDir": <absolute path>/plugins,
-      "pluginPath": <absolute path>/plugins/plugin name,
-      "quiet": false,
-      "silent": false,
-    }
-  `);
-});
+    describe('command line option parsing', function () {
 
-it('overrides the defaults with the parsed cli options', () => {
-  expect(
-    parse(command, {
-      quiet: true,
-      silent: true,
-      config: 'foo/bar',
-    })
-  ).toMatchInlineSnapshot(`
-    Object {
-      "config": "foo/bar",
-      "plugin": "plugin name",
-      "pluginDir": <absolute path>/plugins,
-      "pluginPath": <absolute path>/plugins/plugin name,
-      "quiet": true,
-      "silent": true,
-    }
-  `);
+      describe('parse function', function () {
+
+        const command = 'plugin name';
+        let options = {};
+        const kbnPackage = { version: 1234 };
+        beforeEach(function () {
+          options = { pluginDir: fromRoot('plugins') };
+        });
+
+        describe('quiet option', function () {
+
+          it('should default to false', function () {
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.quiet).toBe(false);
+          });
+
+          it('should set settings.quiet property to true', function () {
+            options.quiet = true;
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.quiet).toBe(true);
+          });
+
+        });
+
+        describe('silent option', function () {
+
+          it('should default to false', function () {
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.silent).toBe(false);
+          });
+
+          it('should set settings.silent property to true', function () {
+            options.silent = true;
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.silent).toBe(true);
+          });
+
+        });
+
+        describe('config option', function () {
+
+          it('should default to ZLS', function () {
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.config).toBe('');
+          });
+
+          it('should set settings.config property', function () {
+            options.config = 'foo bar baz';
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.config).toBe('foo bar baz');
+          });
+
+        });
+
+        describe('pluginDir option', function () {
+
+          it('should default to plugins', function () {
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.pluginDir).toBe(fromRoot('plugins'));
+          });
+
+          it('should set settings.config property', function () {
+            options.pluginDir = 'foo bar baz';
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.pluginDir).toBe('foo bar baz');
+          });
+
+        });
+
+        describe('command value', function () {
+
+          it('should set settings.plugin property', function () {
+            const settings = parse(command, options, kbnPackage);
+
+            expect(settings.plugin).toBe(command);
+          });
+
+        });
+
+      });
+
+    });
+
+  });
+
 });

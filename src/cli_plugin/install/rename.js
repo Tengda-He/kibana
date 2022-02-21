@@ -1,13 +1,4 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import { rename } from 'fs';
-
 import { delay } from 'lodash';
 
 export function renamePlugin(workingPath, finalPath) {
@@ -21,12 +12,7 @@ export function renamePlugin(workingPath, finalPath) {
         // Retry for up to retryTime seconds
         const windowsEPERM = process.platform === 'win32' && err.code === 'EPERM';
         const retryAvailable = Date.now() - start < retryTime;
-
-        if (windowsEPERM && retryAvailable) {
-          delay(rename, retryDelay, workingPath, finalPath, retry);
-          return;
-        }
-
+        if (windowsEPERM && retryAvailable) return delay(rename, retryDelay, workingPath, finalPath, retry);
         reject(err);
       }
       resolve();

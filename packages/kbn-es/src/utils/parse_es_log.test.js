@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const dedent = require('dedent');
 const { parseEsLog } = require('./parse_es_log');
 
@@ -31,7 +23,7 @@ test('parses multiple lines', () => {
   expect(lines[1].message).toMatchSnapshot();
 });
 
-test('parses data containing exception', () => {
+test('parses data containing execption', () => {
   const data = dedent(`
     [2018-02-23T10:13:45,646][INFO ][o.e.n.Node               ] [qEfPPg8] starting ...
     [2018-02-23T10:13:53,992][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [] uncaught exception in thread [main]

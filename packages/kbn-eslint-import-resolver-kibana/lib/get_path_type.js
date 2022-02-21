@@ -1,18 +1,12 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const { statSync } = require('fs');
 
 const LRU = require('lru-cache');
 
 const DIR = Symbol('dir');
 const FILE = Symbol('file');
-const cache = process.env.KIBANA_RESOLVER_HARD_CACHE ? new Map() : new LRU({ maxAge: 1000 });
+const cache = process.env.KIBANA_RESOLVER_HARD_CACHE
+  ? new Map()
+  : new LRU({ maxAge: 1000 });
 
 function getPathType(path) {
   const cached = cache.get(path);
@@ -38,10 +32,10 @@ function getPathType(path) {
   return type;
 }
 
-exports.isDirectory = function (path) {
+exports.isDirectory = function(path) {
   return getPathType(path) === DIR;
 };
 
-exports.isFile = function (path) {
+exports.isFile = function(path) {
   return getPathType(path) === FILE;
 };

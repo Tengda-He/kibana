@@ -9,12 +9,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "count": {
-          "type": "long"
-        },
-        "time": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "count": {
+            "type": "long"
+          },
+          "time": {
+            "type": "date"
+          }
         }
       }
     }
@@ -32,12 +34,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "count": {
-          "type": "long"
-        },
-        "time": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "count": {
+            "type": "long"
+          },
+          "time": {
+            "type": "date"
+          }
         }
       }
     }
@@ -55,12 +59,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "count": {
-          "type": "long"
-        },
-        "time": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "count": {
+            "type": "long"
+          },
+          "time": {
+            "type": "date"
+          }
         }
       }
     }
@@ -78,12 +84,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "count": {
-          "type": "long"
-        },
-        "time": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "count": {
+            "type": "long"
+          },
+          "time": {
+            "type": "date"
+          }
         }
       }
     }
@@ -101,12 +109,14 @@
       }
     },
     "mappings": {
-      "properties": {
-        "count": {
-          "type": "long"
-        },
-        "time": {
-          "type": "date"
+      "type": {
+        "properties": {
+          "count": {
+            "type": "long"
+          },
+          "time": {
+            "type": "date"
+          }
         }
       }
     }

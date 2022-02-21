@@ -1,15 +1,8 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 /**
  * Generates file transfer progress messages
  */
-export class Progress {
+export default class Progress {
+
   constructor(logger) {
     const self = this;
 
@@ -30,9 +23,9 @@ export class Progress {
     if (!this.totalSize) return;
 
     this.runningTotal += size;
-    let newDotCount = Math.round(((this.runningTotal / this.totalSize) * 100) / 5);
+    let newDotCount = Math.round(this.runningTotal / this.totalSize * 100 / 5);
     if (newDotCount > 20) newDotCount = 20;
-    for (let i = 0; i < newDotCount - this.dotCount; i++) {
+    for (let i = 0; i < (newDotCount - this.dotCount); i++) {
       this.logger.log('.', true);
     }
     this.dotCount = newDotCount;
@@ -41,4 +34,5 @@ export class Progress {
   complete() {
     this.logger.log(`Transfer complete`, false);
   }
+
 }

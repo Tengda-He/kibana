@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const { dirname, resolve, parse } = require('path');
 const { accessSync, readFileSync } = require('fs');
 
@@ -16,8 +8,12 @@ function getConfig(config) {
     projectRoot: true,
   };
 
-  if (!config || !config['@elastic/eslint-import-resolver-kibana']) return defaults;
-  return Object.assign(defaults, config['@elastic/eslint-import-resolver-kibana']);
+  if (!config || !config['@elastic/eslint-import-resolver-kibana'])
+    return defaults;
+  return Object.assign(
+    defaults,
+    config['@elastic/eslint-import-resolver-kibana']
+  );
 }
 
 function getRootPackageDir(dirRoot, dir, rootPackageName) {
@@ -39,12 +35,13 @@ function getRootPackageDir(dirRoot, dir, rootPackageName) {
     // recurse until a matching package.json is found
     return getRootPackageDir(dirRoot, dirname(dir), rootPackageName);
   } catch (e) {
-    if (e.code === 'ENOENT') return getRootPackageDir(dirRoot, dirname(dir), rootPackageName);
+    if (e.code === 'ENOENT')
+      return getRootPackageDir(dirRoot, dirname(dir), rootPackageName);
     throw e;
   }
 }
 
-exports.getProjectRoot = function (file, config) {
+exports.getProjectRoot = function(file, config) {
   const { root, dir } = parse(resolve(file));
   const { rootPackageName } = config;
 

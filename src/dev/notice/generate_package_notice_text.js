@@ -1,14 +1,6 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import { getBundledNotices } from './bundled_notices';
 
-const concatNotices = (notices) => notices.map((notice) => notice.text).join('\n');
+const concatNotices = notices => notices.map(notice => notice.text).join('\n');
 
 export async function generatePackageNoticeText(pkg) {
   const bundledNotices = concatNotices(await getBundledNotices(pkg.directory));

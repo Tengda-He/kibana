@@ -1,49 +1,28 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
+import { resolve } from 'path';
 
-import { mkdir, symlink } from 'fs';
-import { join, resolve } from 'path';
-import del from 'del';
-import { promisify } from 'util';
-
-import { getProjectPaths } from '../config';
-import { Project } from './project';
 import {
-  buildProjectGraph,
   getProjects,
-  includeTransitiveProjects,
-  ProjectGraph,
-  ProjectMap,
+  buildProjectGraph,
   topologicallyBatchProjects,
+  includeTransitiveProjects,
+  ProjectMap,
+  ProjectGraph,
 } from './projects';
+import { Project } from './project';
+import { getProjectPaths } from '../config';
 
-const rootPath = resolve(__dirname, '__fixtures__/kibana');
-const rootPlugins = join(rootPath, 'plugins');
+const rootPath = resolve(`${__dirname}/__fixtures__/kibana`);
 
 describe('#getProjects', () => {
-  beforeAll(async () => {
-    await promisify(mkdir)(rootPlugins);
-
-    await promisify(symlink)(
-      join(__dirname, '__fixtures__/symlinked-plugins/corge'),
-      join(rootPlugins, 'corge')
-    );
-  });
-
-  afterAll(async () => await del(rootPlugins));
-
   test('find all packages in the packages directory', async () => {
     const projects = await getProjects(rootPath, ['packages/*']);
 
     const expectedProjects = ['bar', 'foo'];
 
     expect(projects.size).toBe(2);
-    expect([...projects.keys()]).toEqual(expect.arrayContaining(expectedProjects));
+    expect([...projects.keys()]).toEqual(
+      expect.arrayContaining(expectedProjects)
+    );
   });
 
   test('can specify root as a separate project', async () => {
@@ -56,20 +35,25 @@ describe('#getProjects', () => {
   test('handles packages outside root', async () => {
     const projects = await getProjects(rootPath, ['../plugins/*']);
 
-    const expectedProjects = ['baz', 'quux', 'zorge'];
+    const expectedProjects = ['baz', 'quux'];
 
-    expect(projects.size).toBe(3);
-    expect([...projects.keys()]).toEqual(expect.arrayContaining(expectedProjects));
+    expect(projects.size).toBe(2);
+    expect([...projects.keys()]).toEqual(
+      expect.arrayContaining(expectedProjects)
+    );
   });
 
   test('throws if multiple projects has the same name', async () => {
     await expect(
       getProjects(rootPath, ['../plugins/*', '../other-plugins/*'])
-    ).rejects.toHaveProperty('message', 'There are multiple projects with the same name [baz]');
+    ).rejects.toHaveProperty(
+      'message',
+      'There are multiple projects with the same name [baz]'
+    );
   });
 
   test('includes additional projects in package.json', async () => {
-    const projectPaths = getProjectPaths({ rootPath });
+    const projectPaths = getProjectPaths(rootPath, {});
     const projects = await getProjects(rootPath, projectPaths);
 
     const expectedProjects = [
@@ -79,17 +63,18 @@ describe('#getProjects', () => {
       'with-additional-projects',
       'quux',
       'baz',
-      'bar',
     ];
 
-    expect([...projects.keys()]).toEqual(expect.arrayContaining(expectedProjects));
+    expect([...projects.keys()]).toEqual(
+      expect.arrayContaining(expectedProjects)
+    );
     expect(projects.size).toBe(expectedProjects.length);
   });
 
   describe('with exclude/include filters', () => {
     let projectPaths: string[];
     beforeEach(() => {
-      projectPaths = getProjectPaths({ rootPath });
+      projectPaths = getProjectPaths(rootPath, {});
     });
 
     test('excludes projects specified in `exclude` filter', async () => {
@@ -98,7 +83,6 @@ describe('#getProjects', () => {
       });
 
       expect([...projects.keys()].sort()).toEqual([
-        'corge',
         'kibana',
         'quux',
         'with-additional-projects',
@@ -112,7 +96,6 @@ describe('#getProjects', () => {
 
       expect([...projects.keys()].sort()).toEqual([
         'baz',
-        'corge',
         'foo',
         'kibana',
         'quux',
@@ -155,7 +138,14 @@ describe('#getProjects', () => {
 
     test('does not return any project if `exclude` filter is specified for all projects', async () => {
       const projects = await getProjects(rootPath, projectPaths, {
-        exclude: ['kibana', 'bar', 'corge', 'foo', 'with-additional-projects', 'quux', 'baz'],
+        exclude: [
+          'kibana',
+          'bar',
+          'foo',
+          'with-additional-projects',
+          'quux',
+          'baz',
+        ],
       });
 
       expect(projects.size).toBe(0);
@@ -174,8 +164,12 @@ describe('#getProjects', () => {
 
 describe('#buildProjectGraph', () => {
   test('builds full project graph', async () => {
-    const allProjects = await getProjects(rootPath, ['.', 'packages/*', '../plugins/*']);
-    const graph = buildProjectGraph(allProjects);
+    const projects = await getProjects(rootPath, [
+      '.',
+      'packages/*',
+      '../plugins/*',
+    ]);
+    const graph = buildProjectGraph(projects);
 
     const expected: { [k: string]: string[] } = {};
     for (const [projectName, projects] of graph.entries()) {
@@ -197,7 +191,9 @@ describe('#topologicallyBatchProjects', () => {
   test('batches projects topologically based on their project dependencies', async () => {
     const batches = topologicallyBatchProjects(projects, graph);
 
-    const expectedBatches = batches.map((batch) => batch.map((project) => project.name));
+    const expectedBatches = batches.map(batch =>
+      batch.map(project => project.name)
+    );
 
     expect(expectedBatches).toMatchSnapshot();
   });
@@ -208,7 +204,9 @@ describe('#topologicallyBatchProjects', () => {
 
     const batches = topologicallyBatchProjects(projects, graph);
 
-    const expectedBatches = batches.map((batch) => batch.map((project) => project.name));
+    const expectedBatches = batches.map(batch =>
+      batch.map(project => project.name)
+    );
 
     expect(expectedBatches).toMatchSnapshot();
   });
@@ -244,7 +242,11 @@ describe('#includeTransitiveProjects', () => {
   });
 
   test('includes dependencies of dependencies', async () => {
-    const projects = await getProjects(rootPath, ['.', 'packages/*', '../plugins/*']);
+    const projects = await getProjects(rootPath, [
+      '.',
+      'packages/*',
+      '../plugins/*',
+    ]);
 
     const quux = projects.get('quux')!;
     const withTransitive = includeTransitiveProjects([quux], projects);

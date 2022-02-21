@@ -1,43 +1,27 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-const mockKeystoreData =
-  '1:IxR0geiUTMJp8ueHDkqeUJ0I9eEw4NJPXIJi22UDyfGfJSy4mH' +
-  'BBuGPkkAix/x/YFfIxo4tiKGdJ2oVTtU8LgKDkVoGdL+z7ylY4n3myatt6osqhI4lzJ9M' +
-  'Ry21UcAJki2qFUTj4TYuvhta3LId+RM5UX/dJ2468hQ==';
-
-jest.mock('fs', () => ({
-  readFileSync: jest.fn().mockImplementation((path) => {
-    if (!path.includes('nonexistent')) {
-      return JSON.stringify(mockKeystoreData);
-    }
-
-    throw { code: 'ENOENT' };
-  }),
-  existsSync: jest.fn().mockImplementation((path) => {
-    return !path.includes('nonexistent');
-  }),
-  writeFileSync: jest.fn(),
-}));
-
 import sinon from 'sinon';
+import mockFs from 'mock-fs';
 import { PassThrough } from 'stream';
 
-import { Keystore } from '../cli/keystore';
+import { Keystore } from '../server/keystore';
 import { add } from './add';
-import { Logger } from '../cli_plugin/lib/logger';
-import * as prompt from './utils/prompt';
+import Logger from '../cli_plugin/lib/logger';
+import * as prompt from '../server/utils/prompt';
 
 describe('Kibana keystore', () => {
   describe('add', () => {
-    const sandbox = sinon.createSandbox();
+    const sandbox = sinon.sandbox.create();
+
+    const keystoreData = '1:IxR0geiUTMJp8ueHDkqeUJ0I9eEw4NJPXIJi22UDyfGfJSy4mH'
+      + 'BBuGPkkAix/x/YFfIxo4tiKGdJ2oVTtU8LgKDkVoGdL+z7ylY4n3myatt6osqhI4lzJ9M'
+      + 'Ry21UcAJki2qFUTj4TYuvhta3LId+RM5UX/dJ2468hQ==';
 
     beforeEach(() => {
+      mockFs({
+        '/data': {
+          'test.keystore': JSON.stringify(keystoreData),
+        }
+      });
+
       sandbox.stub(prompt, 'confirm');
       sandbox.stub(prompt, 'question');
 
@@ -46,12 +30,13 @@ describe('Kibana keystore', () => {
     });
 
     afterEach(() => {
+      mockFs.restore();
       sandbox.restore();
     });
 
     it('returns an error for a nonexistent keystore', async () => {
       const keystore = new Keystore('/data/nonexistent.keystore');
-      const message = "ERROR: Kibana keystore not found. Use 'create' command to create one.";
+      const message = 'ERROR: Kibana keystore not found. Use \'create\' command to create one.';
 
       await add(keystore, 'foo');
 
@@ -118,19 +103,9 @@ describe('Kibana keystore', () => {
       expect(keystore.data.foo).toEqual('bar');
     });
 
-    it('parses JSON values', async () => {
-      prompt.question.returns(Promise.resolve('["bar"]\n'));
-
-      const keystore = new Keystore('/data/test.keystore');
-      sandbox.stub(keystore, 'save');
-
-      await add(keystore, 'foo');
-
-      expect(keystore.data.foo).toEqual(['bar']);
-    });
-
     it('persists updated keystore', async () => {
       prompt.question.returns(Promise.resolve('bar\n'));
+
 
       const keystore = new Keystore('/data/test.keystore');
       sandbox.stub(keystore, 'save');
@@ -154,9 +129,5 @@ describe('Kibana keystore', () => {
 
       expect(keystore.data.foo).toEqual('kibana');
     });
-  });
-
-  afterAll(() => {
-    jest.restoreAllMocks();
   });
 });

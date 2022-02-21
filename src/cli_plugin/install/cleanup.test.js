@@ -1,23 +1,17 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import sinon from 'sinon';
 import fs from 'fs';
-import del from 'del';
+import rimraf from 'rimraf';
 
 import { cleanPrevious, cleanArtifacts } from './cleanup';
-import { Logger } from '../lib/logger';
+import Logger from '../lib/logger';
 
 describe('kibana cli', function () {
+
   describe('plugin installer', function () {
+
     describe('pluginCleaner', function () {
       const settings = {
-        workingPath: 'dummy',
+        workingPath: 'dummy'
       };
 
       describe('cleanPrevious', function () {
@@ -35,12 +29,12 @@ describe('kibana cli', function () {
           logger.log.restore();
           logger.error.restore();
           fs.statSync.restore();
-          del.sync.restore();
+          rimraf.sync.restore();
         });
 
         it('should resolve if the working path does not exist', function () {
-          sinon.stub(del, 'sync');
-          sinon.stub(fs, 'statSync').callsFake(() => {
+          sinon.stub(rimraf, 'sync');
+          sinon.stub(fs, 'statSync', function () {
             const error = new Error('ENOENT');
             error.code = 'ENOENT';
             throw error;
@@ -54,8 +48,11 @@ describe('kibana cli', function () {
         });
 
         it('should rethrow any exception except ENOENT from fs.statSync', function () {
-          sinon.stub(del, 'sync');
-          sinon.stub(fs, 'statSync').throws(new Error('An Unhandled Error'));
+          sinon.stub(rimraf, 'sync');
+          sinon.stub(fs, 'statSync', function () {
+            const error = new Error('An Unhandled Error');
+            throw error;
+          });
 
           errorStub = sinon.stub();
           return cleanPrevious(settings, logger)
@@ -66,21 +63,21 @@ describe('kibana cli', function () {
         });
 
         it('should log a message if there was a working directory', function () {
-          sinon.stub(del, 'sync');
+          sinon.stub(rimraf, 'sync');
           sinon.stub(fs, 'statSync');
 
           return cleanPrevious(settings, logger)
             .catch(errorStub)
             .then(function () {
-              expect(logger.log.calledWith('Found previous install attempt. Deleting...')).toBe(
-                true
-              );
+              expect(logger.log.calledWith('Found previous install attempt. Deleting...')).toBe(true);
             });
         });
 
-        it('should rethrow any exception from del.sync', function () {
+        it('should rethrow any exception from rimraf.sync', function () {
           sinon.stub(fs, 'statSync');
-          sinon.stub(del, 'sync').throws(new Error('I am an error thrown by del'));
+          sinon.stub(rimraf, 'sync', function () {
+            throw new Error('I am an error thrown by rimraf');
+          });
 
           errorStub = sinon.stub();
           return cleanPrevious(settings, logger)
@@ -91,7 +88,7 @@ describe('kibana cli', function () {
         });
 
         it('should resolve if the working path is deleted', function () {
-          sinon.stub(del, 'sync');
+          sinon.stub(rimraf, 'sync');
           sinon.stub(fs, 'statSync');
 
           return cleanPrevious(settings, logger)
@@ -106,22 +103,27 @@ describe('kibana cli', function () {
         beforeEach(function () {});
 
         afterEach(function () {
-          del.sync.restore();
+          rimraf.sync.restore();
         });
 
         it('should attempt to delete the working directory', function () {
-          sinon.stub(del, 'sync');
+          sinon.stub(rimraf, 'sync');
 
           cleanArtifacts(settings);
-          expect(del.sync.calledWith(settings.workingPath)).toBe(true);
+          expect(rimraf.sync.calledWith(settings.workingPath)).toBe(true);
         });
 
-        it('should swallow any errors thrown by del.sync', function () {
-          sinon.stub(del, 'sync').throws(new Error('Something bad happened.'));
+        it('should swallow any errors thrown by rimraf.sync', function () {
+          sinon.stub(rimraf, 'sync', function () {
+            throw new Error('Something bad happened.');
+          });
 
           expect(() => cleanArtifacts(settings)).not.toThrow();
         });
       });
+
     });
+
   });
+
 });

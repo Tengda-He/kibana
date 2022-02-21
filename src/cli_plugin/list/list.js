@@ -1,31 +1,20 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import { statSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-export function list(pluginDir, logger) {
-  const plugins = readdirSync(pluginDir)
-    .map((name) => [name, statSync(join(pluginDir, name))])
-    .filter(([name, stat]) => stat.isDirectory() && name[0] !== '.');
+export default function list(settings, logger) {
+  readdirSync(settings.pluginDir)
+    .forEach((filename) => {
+      const stat = statSync(join(settings.pluginDir, filename));
 
-  if (plugins.length === 0) {
-    logger.log('No plugins installed.');
-    return;
-  }
-
-  plugins.forEach(([name]) => {
-    try {
-      const packagePath = join(pluginDir, name, 'kibana.json');
-      const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
-      logger.log(pkg.id + '@' + pkg.version);
-    } catch (e) {
-      throw new Error('Unable to read kibana.json file for plugin ' + name);
-    }
-  });
+      if (stat.isDirectory() && filename[0] !== '.') {
+        try {
+          const packagePath = join(settings.pluginDir, filename, 'package.json');
+          const { version } = JSON.parse(readFileSync(packagePath, 'utf8'));
+          logger.log(filename + '@' + version);
+        } catch (e) {
+          throw new Error('Unable to read package.json file for plugin ' + filename);
+        }
+      }
+    });
+  logger.log(''); //intentional blank line for aesthetics
 }

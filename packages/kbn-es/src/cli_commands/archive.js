@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const dedent = require('dedent');
 const getopts = require('getopts');
 const { Cluster } = require('../cluster');
@@ -21,12 +13,10 @@ exports.help = (defaults = {}) => {
   return dedent`
     Options:
 
-      --base-path       Path containing cache/installations [default: ${basePath}]
-      --install-path    Installation path, defaults to 'source' within base-path
-      --password        Sets password for elastic user [default: ${password}]
-      --password.[user] Sets password for native realm user [default: ${password}]
-      --ssl             Sets up SSL on Elasticsearch
-      -E                Additional key=value settings to pass to Elasticsearch
+      --base-path     Path containing cache/installations [default: ${basePath}]
+      --install-path  Installation path, defaults to 'source' within base-path
+      --password      Sets password for elastic user [default: ${password}]
+      -E              Additional key=value settings to pass to Elasticsearch
 
     Example:
 
@@ -46,7 +36,7 @@ exports.run = async (defaults = {}) => {
     default: defaults,
   });
 
-  const cluster = new Cluster({ ssl: options.ssl });
+  const cluster = new Cluster();
   const [, path] = options._;
 
   if (!path || !path.endsWith('tar.gz')) {
@@ -54,5 +44,5 @@ exports.run = async (defaults = {}) => {
   }
 
   const { installPath } = await cluster.installArchive(path, options);
-  await cluster.run(installPath, options);
+  await cluster.run(installPath, { esArgs: options.esArgs });
 };

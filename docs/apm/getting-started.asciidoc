@@ -1,62 +1,27 @@
 [role="xpack"]
 [[apm-getting-started]]
-== Get started with the APM app
+== Getting Started
 
-++++
-<titleabbrev>Get started</titleabbrev>
-++++
+If you have not already installed and configured Elastic APM, the
+**APM > Getting Started** page in {kib} provides information to help you
+complete the setup.
 
-// Conditionally display a screenshot or video depending on what the
-// current documentation version is.
+[role="screenshot"]
+image::apm/images/apm-setup.jpg[Installation instructions on the APM page in Kibana]
 
-ifeval::["{is-current-version}"=="true"]
-++++
-<script type="text/javascript" async src="https://play.vidyard.com/embed/v4.js"></script>
-<img
-  style="width: 100%; margin: auto; display: block;"
-  class="vidyard-player-embed"
-  src="https://play.vidyard.com/Y4nE2XLYEk75odbRQmUA3g.jpg"
-  data-uuid="Y4nE2XLYEk75odbRQmUA3g"
-  data-v="4"
-  data-type="inline"
-/>
-</br>
-++++
-endif::[]
+After you install the Elastic APM agent library in your application, the
+application automatically appears in the APM UI in {kib}. No further
+configuration is required.
 
-For a quick, high-level overview of the health and performance of your application,
-start with:
+If you also use Elastic Stack for logging and server-level metrics, you can
+optionally import the APM dashboards that come with the APM Server. You can use
+these APM-specific visualizations to correlate APM data with other data sources.
+To get the dashboards, run the following command on the APM server:
 
-* <<services>>
-* <<traces>>
-* <<dependencies>>
-* <<service-maps>>
+[source,shell]
+----------------------------------------------------------
+./apm-server setup
+----------------------------------------------------------
 
-Notice something awry? Select a service or trace and dive deeper with:
-
-* <<service-overview>>
-* <<transactions>>
-* <<spans>>
-* <<errors>>
-* <<metrics>>
-
-TIP: Want to learn more about the Elastic APM ecosystem?
-See the {apm-guide-ref}/apm-overview.html[APM Overview].
-
-include::services.asciidoc[]
-
-include::traces.asciidoc[]
-
-include::dependencies.asciidoc[]
-
-include::service-maps.asciidoc[]
-
-include::service-overview.asciidoc[]
-
-include::transactions.asciidoc[]
-
-include::spans.asciidoc[]
-
-include::errors.asciidoc[]
-
-include::metrics.asciidoc[]
+//For more setup information, see
+//{apm-get-started-ref}/index.html[Getting Started with APM].

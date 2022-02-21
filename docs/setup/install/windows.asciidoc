@@ -1,13 +1,14 @@
 [[windows]]
-=== Install {kib} on Windows
-++++
-<titleabbrev>Install on Windows</titleabbrev>
-++++
+=== Install Kibana on Windows
 
 Kibana can be installed on Windows using the `.zip` package.
 
-This package contains both free and subscription features.
-<<managing-licenses,Start a 30-day trial>> to try out all of the features.
+This package is free to use under the Elastic license. It contains open source 
+and free commercial features and access to paid commercial features. 
+{xpack-ref}/license-management.html[Start a 30-day trial] to try out all of the 
+paid commercial features. See the 
+https://www.elastic.co/subscriptions[Subscriptions] page for information about 
+Elastic license levels.
 
 The latest stable version of Kibana can be found on the
 link:/downloads/kibana[Download Kibana] page.
@@ -38,16 +39,17 @@ terminal window, `CD` to the `$KIBANA_HOME` directory, for instance:
 CD c:\kibana-{version}-windows-x86_64
 ----------------------------
 
-endif::[]
+Alternatively, you can download the following package, which contains only 
+features that are available under the Apache 2.0 license:
+https://artifacts.elastic.co/downloads/kibana/kibana-oss-{version}-windows-x86_64.zip  
 
-[[windows-enroll]]
-include::start-es-and-enroll.asciidoc[]
+endif::[]
 
 [[windows-running]]
 include::windows-running.asciidoc[]
 
 [[windows-configuring]]
-==== Configure {kib} via the config file
+==== Configuring Kibana via config file
 
 Kibana loads its configuration from the `$KIBANA_HOME/config/kibana.yml`
 file by default.  The format of this config file is explained in
@@ -84,12 +86,17 @@ important data later on.
 | config
   | Configuration files including `kibana.yml`
   | $KIBANA_HOME\config
-  | <<settings,KBN_PATH_CONF>>
  d|
 
 | data
   | The location of the data files written to disk by Kibana and its plugins
   | $KIBANA_HOME\data
+ d|
+
+| optimize
+  | Transpiled source code. Certain administrative actions (e.g. plugin install)
+    result in the source code being retranspiled on the fly.
+  | $KIBANA_HOME\optimize
  d|
 
 | plugins

@@ -1,33 +1,24 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import Fs from 'fs';
-import { promisify } from 'util';
-import path from 'path';
-
-import del from 'del';
-
 import { download } from './download';
+import Promise from 'bluebird';
+import path from 'path';
 import { cleanPrevious, cleanArtifacts } from './cleanup';
 import { extract, getPackData } from './pack';
 import { renamePlugin } from './rename';
+import { sync as rimrafSync } from 'rimraf';
 import { errorIfXPackInstall } from '../lib/error_if_x_pack';
-import { existingInstall, assertVersion } from './kibana';
+import { existingInstall, rebuildCache, assertVersion } from './kibana';
+import { prepareExternalProjectDependencies } from '@kbn/pm';
+import mkdirp from 'mkdirp';
 
-const mkdir = promisify(Fs.mkdir);
+const mkdir = Promise.promisify(mkdirp);
 
-export async function install(settings, logger) {
+export default async function install(settings, logger) {
   try {
     errorIfXPackInstall(settings, logger);
 
     await cleanPrevious(settings, logger);
 
-    await mkdir(settings.workingPath, { recursive: true });
+    await mkdir(settings.workingPath);
 
     await download(settings, logger);
 
@@ -35,19 +26,22 @@ export async function install(settings, logger) {
 
     await extract(settings, logger);
 
-    del.sync(settings.tempArchiveFile, { force: true });
+    rimrafSync(settings.tempArchiveFile);
 
     existingInstall(settings, logger);
 
     assertVersion(settings);
 
-    const targetDir = path.join(settings.pluginDir, settings.plugins[0].id);
-    await renamePlugin(settings.workingPath, targetDir);
+    await prepareExternalProjectDependencies(settings.workingPath);
+
+    await renamePlugin(settings.workingPath, path.join(settings.pluginDir, settings.plugins[0].name));
+
+    await rebuildCache(settings, logger);
 
     logger.log('Plugin installation complete');
   } catch (err) {
     logger.error(`Plugin installation was unsuccessful due to error "${err.message}"`);
     cleanArtifacts(settings);
-    process.exit(70);
+    process.exit(70); // eslint-disable-line no-process-exit
   }
 }

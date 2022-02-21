@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const chalk = require('chalk');
 const getopts = require('getopts');
 const dedent = require('dedent');
@@ -15,7 +7,7 @@ const { log } = require('./utils');
 
 function help() {
   const availableCommands = Object.keys(commands).map(
-    (name) => `${name} - ${commands[name].description}`
+    name => `${name} - ${commands[name].description}`
   );
 
   console.log(dedent`
@@ -54,7 +46,9 @@ exports.run = async (defaults = {}) => {
     const command = commands[commandName];
 
     if (command === undefined) {
-      log.error(chalk.red(`[${commandName}] is not a valid command, see 'es --help'`));
+      log.error(
+        chalk.red(`[${commandName}] is not a valid command, see 'es --help'`)
+      );
       process.exitCode = 1;
       return;
     }

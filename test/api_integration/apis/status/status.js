@@ -1,12 +1,4 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import expect from '@kbn/expect';
+import expect from 'expect.js';
 
 export default function ({ getService }) {
   const supertest = getService('supertest');
@@ -25,26 +17,30 @@ export default function ({ getService }) {
           expect(body.version.build_number).to.be.a('number');
 
           expect(body.status.overall).to.be.an('object');
-          expect(body.status.overall.level).to.be.a('string');
+          expect(body.status.overall.state).to.be('green');
 
-          expect(body.status.core).to.be.an('object');
-          expect(body.status.plugins).to.be.an('object');
+          expect(body.status.statuses).to.be.an('array');
+          const kibanaPlugin = body.status.statuses.find(s => {
+            return s.id.indexOf('plugin:kibana') === 0;
+          });
+          expect(kibanaPlugin.state).to.be('green');
 
           expect(body.metrics.collection_interval_in_millis).to.be.a('number');
 
-          expect(body.metrics.process.memory.heap.total_in_bytes).to.be.a('number');
-          expect(body.metrics.process.memory.heap.used_in_bytes).to.be.a('number');
-          expect(body.metrics.process.memory.heap.size_limit).to.be.a('number');
+          expect(body.metrics.process.mem.heap_max_in_bytes).to.be.a('number');
+          expect(body.metrics.process.mem.heap_used_in_bytes).to.be.a('number');
 
-          expect(body.metrics.os.load['1m']).to.be.a('number');
-          expect(body.metrics.os.load['5m']).to.be.a('number');
-          expect(body.metrics.os.load['15m']).to.be.a('number');
+          expect(body.metrics.os.cpu.load_average['1m']).to.be.a('number');
+          expect(body.metrics.os.cpu.load_average['5m']).to.be.a('number');
+          expect(body.metrics.os.cpu.load_average['15m']).to.be.a('number');
 
-          expect(body.metrics.response_times.avg_in_millis).not.to.be(null); // ok if undefined
-          expect(body.metrics.response_times.max_in_millis).not.to.be(null); // ok if undefined
+          // TODO: fix this in the status/metrics class so this is always defined
+          // expect(body.metrics.response_times.avg_in_millis).not.to.be(undefined); // a number, but is null if no measurements have yet been collected for averaging
+          expect(body.metrics.response_times.max_in_millis).to.be.a('number');
 
           expect(body.metrics.requests.total).to.be.a('number');
           expect(body.metrics.requests.disconnects).to.be.a('number');
+          expect(body.metrics.requests.status_codes).to.be.an('object');
           expect(body.metrics.concurrent_connections).to.be.a('number');
         });
     });

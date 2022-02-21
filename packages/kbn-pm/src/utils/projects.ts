@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import globSync from 'glob';
 import path from 'path';
 import { promisify } from 'util';
@@ -15,19 +7,14 @@ import { Project } from './project';
 
 const glob = promisify(globSync);
 
-/** a Map of project names to Project instances */
 export type ProjectMap = Map<string, Project>;
 export type ProjectGraph = Map<string, Project[]>;
-export interface IProjectsOptions {
-  include?: string[];
-  exclude?: string[];
-}
+export type ProjectsOptions = { include?: string[]; exclude?: string[] };
 
 export async function getProjects(
   rootPath: string,
   projectsPathsPatterns: string[],
-  { include = [], exclude = [] }: IProjectsOptions = {},
-  bazelOnly: boolean = false
+  { include = [], exclude = [] }: ProjectsOptions = {}
 ) {
   const projects: ProjectMap = new Map();
 
@@ -41,18 +28,20 @@ export async function getProjects(
 
       const excludeProject =
         exclude.includes(project.name) ||
-        (include.length > 0 && !include.includes(project.name)) ||
-        (bazelOnly && !project.isBazelPackage());
+        (include.length > 0 && !include.includes(project.name));
 
       if (excludeProject) {
         continue;
       }
 
       if (projects.has(project.name)) {
-        throw new CliError(`There are multiple projects with the same name [${project.name}]`, {
-          name: project.name,
-          paths: [project.path, projects.get(project.name)!.path],
-        });
+        throw new CliError(
+          `There are multiple projects with the same name [${project.name}]`,
+          {
+            name: project.name,
+            paths: [project.path, projects.get(project.name)!.path],
+          }
+        );
       }
 
       projects.set(project.name, project);
@@ -62,31 +51,13 @@ export async function getProjects(
   return projects;
 }
 
-export async function getNonBazelProjectsOnly(projects: ProjectMap) {
-  const bazelProjectsOnly: ProjectMap = new Map();
-
-  for (const project of projects.values()) {
-    if (!project.isBazelPackage()) {
-      bazelProjectsOnly.set(project.name, project);
-    }
-  }
-
-  return bazelProjectsOnly;
-}
-
-export async function getBazelProjectsOnly(projects: ProjectMap) {
-  const bazelProjectsOnly: ProjectMap = new Map();
-
-  for (const project of projects.values()) {
-    if (project.isBazelPackage()) {
-      bazelProjectsOnly.set(project.name, project);
-    }
-  }
-
-  return bazelProjectsOnly;
-}
-
-function packagesFromGlobPattern({ pattern, rootPath }: { pattern: string; rootPath: string }) {
+function packagesFromGlobPattern({
+  pattern,
+  rootPath,
+}: {
+  pattern: string;
+  rootPath: string;
+}) {
   const globOptions = {
     cwd: rootPath,
 
@@ -121,6 +92,7 @@ export function buildProjectGraph(projects: ProjectMap) {
     for (const depName of Object.keys(dependencies)) {
       if (projects.has(depName)) {
         const dep = projects.get(depName)!;
+
         project.ensureValidProjectDependency(dep);
 
         projectDeps.push(dep);
@@ -138,18 +110,20 @@ export function topologicallyBatchProjects(
   projectGraph: ProjectGraph
 ) {
   // We're going to be chopping stuff out of this list, so copy it.
-  const projectsLeftToBatch = new Set(projectsToBatch.keys());
-  const batches = [];
+  const projectToBatchNames = new Set(projectsToBatch.keys());
 
-  while (projectsLeftToBatch.size > 0) {
+  const batches = [];
+  while (projectToBatchNames.size > 0) {
     // Get all projects that have no remaining dependencies within the repo
     // that haven't yet been picked.
     const batch = [];
-    for (const projectName of projectsLeftToBatch) {
+    for (const projectName of projectToBatchNames) {
       const projectDeps = projectGraph.get(projectName)!;
-      const needsDependenciesBatched = projectDeps.some((dep) => projectsLeftToBatch.has(dep.name));
+      const hasNotBatchedDependencies = projectDeps.some(dep =>
+        projectToBatchNames.has(dep.name)
+      );
 
-      if (!needsDependenciesBatched) {
+      if (!hasNotBatchedDependencies) {
         batch.push(projectsToBatch.get(projectName)!);
       }
     }
@@ -158,7 +132,7 @@ export function topologicallyBatchProjects(
     // then we've encountered a cycle in the dependency graph.
     const hasCycles = batch.length === 0;
     if (hasCycles) {
-      const cycleProjectNames = [...projectsLeftToBatch];
+      const cycleProjectNames = [...projectToBatchNames];
       const message =
         'Encountered a cycle in the dependency graph. Projects in cycle are:\n' +
         cycleProjectNames.join(', ');
@@ -168,7 +142,7 @@ export function topologicallyBatchProjects(
 
     batches.push(batch);
 
-    batch.forEach((project) => projectsLeftToBatch.delete(project.name));
+    batch.forEach(project => projectToBatchNames.delete(project.name));
   }
 
   return batches;
@@ -179,7 +153,7 @@ export function includeTransitiveProjects(
   allProjects: ProjectMap,
   { onlyProductionDependencies = false } = {}
 ) {
-  const projectsWithDependents: ProjectMap = new Map();
+  const dependentProjects: ProjectMap = new Map();
 
   // the current list of packages we are expanding using breadth-first-search
   const toProcess = [...subsetOfProjects];
@@ -191,14 +165,14 @@ export function includeTransitiveProjects(
       ? project.productionDependencies
       : project.allDependencies;
 
-    Object.keys(dependencies).forEach((dep) => {
+    Object.keys(dependencies).forEach(dep => {
       if (allProjects.has(dep)) {
         toProcess.push(allProjects.get(dep)!);
       }
     });
 
-    projectsWithDependents.set(project.name, project);
+    dependentProjects.set(project.name, project);
   }
 
-  return projectsWithDependents;
+  return dependentProjects;
 }

@@ -1,66 +1,78 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import expect from '@kbn/expect';
+import expect from 'expect.js';
 
 export default function ({ getService, getPageObjects }) {
   const kibanaServer = getService('kibanaServer');
-  const testSubjects = getService('testSubjects');
   const log = getService('log');
   const PageObjects = getPageObjects(['settings', 'common']);
 
   describe('index result popularity', function describeIndexTests() {
-    const fieldName = 'geo.coordinates';
-    before(async function () {
+    before(function () {
       // delete .kibana index and then wait for Kibana to re-create it
-      await kibanaServer.uiSettings.replace({});
-      await PageObjects.settings.navigateTo();
+      return kibanaServer.uiSettings.replace({})
+        .then(function () {
+          return PageObjects.settings.navigateTo();
+        });
     });
 
-    beforeEach(async () => {
-      await PageObjects.settings.createIndexPattern();
-      // increase Popularity of geo.coordinates
-      log.debug('Starting openControlsByName (' + fieldName + ')');
-      await PageObjects.settings.openControlsByName(fieldName);
-      log.debug('increasePopularity');
-      await testSubjects.click('toggleAdvancedSetting');
-      await PageObjects.settings.increasePopularity();
+    beforeEach(function be() {
+      return PageObjects.settings.createIndexPattern();
     });
 
-    afterEach(async () => {
-      await PageObjects.settings.closeIndexPatternFieldEditor();
-      await PageObjects.settings.removeIndexPattern();
-      // Cancel saving the popularity change (we didn't make a change in this case, just checking the value)
+    afterEach(function ae() {
+      return PageObjects.settings.removeIndexPattern();
     });
 
-    it('should update the popularity input', async function () {
-      const popularity = await PageObjects.settings.getPopularity();
-      log.debug('popularity = ' + popularity);
-      expect(popularity).to.be('1');
-    });
+    describe('change popularity', function indexPatternCreation() {
+      const fieldName = 'geo.coordinates';
 
-    it('should be reset on cancel', async function () {
-      // Cancel saving the popularity change
-      await PageObjects.settings.closeIndexPatternFieldEditor();
-      await PageObjects.settings.openControlsByName(fieldName);
-      // check that it is 0 (previous increase was cancelled
-      const popularity = await PageObjects.settings.getPopularity();
-      log.debug('popularity = ' + popularity);
-      expect(popularity).to.be('0');
-    });
+      // set the page size to All again, https://github.com/elastic/kibana/issues/5030
+      // TODO: remove this after issue #5030 is closed
+      async function fix5030() {
+        await PageObjects.settings.setPageSize(50);
+        await PageObjects.common.sleep(1000);
+      }
 
-    it('can be saved', async function () {
-      // Saving the popularity change
-      await PageObjects.settings.controlChangeSave();
-      await PageObjects.settings.openControlsByName(fieldName);
-      const popularity = await PageObjects.settings.getPopularity();
-      log.debug('popularity = ' + popularity);
-      expect(popularity).to.be('1');
-    });
-  }); // end 'change popularity'
+      beforeEach(async function () {
+        // increase Popularity of geo.coordinates
+        await PageObjects.settings.setPageSize(50);
+        await PageObjects.common.sleep(1000);
+        log.debug('Starting openControlsByName (' + fieldName + ')');
+        await PageObjects.settings.openControlsByName(fieldName);
+        log.debug('increasePopularity');
+        await PageObjects.settings.increasePopularity();
+      });
+
+      afterEach(async function () {
+        // Cancel saving the popularity change (we didn't make a change in this case, just checking the value)
+        await PageObjects.settings.controlChangeCancel();
+      });
+
+      it('should update the popularity input', async function () {
+        const popularity = await PageObjects.settings.getPopularity();
+        log.debug('popularity = ' + popularity);
+        expect(popularity).to.be('1');
+      });
+
+      it('should be reset on cancel', async function () {
+        // Cancel saving the popularity change
+        await PageObjects.settings.controlChangeCancel();
+        await fix5030();
+        await PageObjects.settings.openControlsByName(fieldName);
+        // check that it is 0 (previous increase was cancelled
+        const popularity = await PageObjects.settings.getPopularity();
+        log.debug('popularity = ' + popularity);
+        expect(popularity).to.be('0');
+      });
+
+      it('can be saved', async function () {
+        // Saving the popularity change
+        await PageObjects.settings.controlChangeSave();
+        await fix5030();
+        await PageObjects.settings.openControlsByName(fieldName);
+        const popularity = await PageObjects.settings.getPopularity();
+        log.debug('popularity = ' + popularity);
+        expect(popularity).to.be('1');
+      });
+    }); // end 'change popularity'
+  }); // end index result popularity
 }

@@ -1,31 +1,21 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import path from 'path';
-import { createWriteStream, mkdir } from 'fs';
-
 import yauzl from 'yauzl';
-
-const isDirectoryRegex = /(\/|\\)$/;
-function isDirectory(filename) {
-  return isDirectoryRegex.test(filename);
-}
+import path from 'path';
+import mkdirp from 'mkdirp';
+import { createWriteStream } from 'fs';
+import { get } from 'lodash';
 
 /**
  * Returns an array of package objects. There will be one for each of
- * package.json files in the archive
+ *  package.json files in the archive
+ *
+ * @param {string} archive - path to plugin archive zip file
  */
 
 export function analyzeArchive(archive) {
   const plugins = [];
-  const regExp = new RegExp('(kibana[\\\\/][^\\\\/]+)[\\\\/]kibana.json', 'i');
+  const regExp = new RegExp('(kibana[\\\\/][^\\\\/]+)[\\\\/]package\.json', 'i');
 
-  return new Promise((resolve, reject) => {
+  return new Promise ((resolve, reject) => {
     yauzl.open(archive, { lazyEntries: true }, function (err, zipfile) {
       if (err) {
         return reject(err);
@@ -39,32 +29,29 @@ export function analyzeArchive(archive) {
           return zipfile.readEntry();
         }
 
-        zipfile.openReadStream(entry, function (error, readable) {
+        zipfile.openReadStream(entry, function (err, readable) {
           const chunks = [];
 
-          if (error) {
-            return reject(error);
+          if (err) {
+            return reject(err);
           }
 
-          readable.on('data', (chunk) => chunks.push(chunk));
+          readable.on('data', chunk => chunks.push(chunk));
 
           readable.on('end', function () {
-            const manifestJson = Buffer.concat(chunks).toString();
-            const manifest = JSON.parse(manifestJson);
+            const contents = Buffer.concat(chunks).toString();
+            const pkg = JSON.parse(contents);
 
-            plugins.push({
-              id: manifest.id,
-              stripPrefix: match[1],
+            plugins.push(Object.assign(pkg, {
+              archivePath: match[1],
+              archive: archive,
 
-              // Plugins must specify their version, and by default that version in the plugin
-              // manifest should match the version of kibana down to the patch level. If these
-              // two versions need plugins can specify a kibanaVersion to indicate the version
-              // of kibana the plugin is intended to work with.
-              kibanaVersion:
-                typeof manifest.kibanaVersion === 'string' && manifest.kibanaVersion
-                  ? manifest.kibanaVersion
-                  : manifest.version,
-            });
+              // Plugins must specify their version, and by default that version should match
+              // the version of kibana down to the patch level. If these two versions need
+              // to diverge, they can specify a kibana.version to indicate the version of
+              // kibana the plugin is intended to work with.
+              kibanaVersion: get(pkg, 'kibana.version', pkg.version)
+            }));
 
             zipfile.readEntry();
           });
@@ -78,7 +65,12 @@ export function analyzeArchive(archive) {
   });
 }
 
-export function extractArchive(archive, targetDir, stripPrefix) {
+const isDirectoryRegex = /(\/|\\)$/;
+export function _isDirectory(filename) {
+  return isDirectoryRegex.test(filename);
+}
+
+export function extractArchive(archive, targetDir, extractPath) {
   return new Promise((resolve, reject) => {
     yauzl.open(archive, { lazyEntries: true }, function (err, zipfile) {
       if (err) {
@@ -90,8 +82,8 @@ export function extractArchive(archive, targetDir, stripPrefix) {
       zipfile.on('entry', function (entry) {
         let fileName = entry.fileName;
 
-        if (stripPrefix && fileName.startsWith(stripPrefix)) {
-          fileName = fileName.substring(stripPrefix.length);
+        if (extractPath && fileName.startsWith(extractPath)) {
+          fileName = fileName.substring(extractPath.length);
         } else {
           return zipfile.readEntry();
         }
@@ -100,34 +92,28 @@ export function extractArchive(archive, targetDir, stripPrefix) {
           fileName = path.join(targetDir, fileName);
         }
 
-        if (isDirectory(fileName)) {
-          mkdir(fileName, { recursive: true }, function (error) {
-            if (error) {
-              return reject(error);
+        if (_isDirectory(fileName)) {
+          mkdirp(fileName, function (err) {
+            if (err) {
+              return reject(err);
             }
 
             zipfile.readEntry();
           });
         } else {
           // file entry
-          zipfile.openReadStream(entry, function (error, readStream) {
-            if (error) {
-              return reject(error);
+          zipfile.openReadStream(entry, function (err, readStream) {
+            if (err) {
+              return reject(err);
             }
 
             // ensure parent directory exists
-            mkdir(path.dirname(fileName), { recursive: true }, function (error2) {
-              if (error2) {
-                return reject(error2);
+            mkdirp(path.dirname(fileName), function (err) {
+              if (err) {
+                return reject(err);
               }
 
-              readStream.pipe(
-                createWriteStream(fileName, {
-                  // eslint-disable-next-line no-bitwise
-                  mode: entry.externalFileAttributes >>> 16,
-                })
-              );
-
+              readStream.pipe(createWriteStream(fileName));
               readStream.on('end', function () {
                 zipfile.readEntry();
               });

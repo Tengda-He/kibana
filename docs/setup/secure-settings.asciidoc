@@ -1,5 +1,5 @@
 [[secure-settings]]
-=== Secure settings
+=== Secure Settings
 
 Some settings are sensitive, and relying on filesystem permissions to protect
 their values is not sufficient. For this use case, Kibana provides a
@@ -9,7 +9,7 @@ NOTE: All commands here should be run as the user which will run Kibana.
 
 [float]
 [[creating-keystore]]
-=== Create the keystore
+=== Creating the keystore
 
 To create the `kibana.keystore`, use the `create` command:
 
@@ -18,12 +18,12 @@ To create the `kibana.keystore`, use the `create` command:
 bin/kibana-keystore create
 ----------------------------------------------------------------
 
-The file `kibana.keystore` will be created in the `config` directory defined by the
-environment variable `KBN_PATH_CONF`.
+The file `kibana.keystore` will be created in the directory defined by the
+`path.data` configuration setting.
 
 [float]
 [[list-settings]]
-=== List settings in the keystore
+=== Listing settings in the keystore
 
 A list of the settings in the keystore is available with the `list` command:
 
@@ -34,7 +34,7 @@ bin/kibana-keystore list
 
 [float]
 [[add-string-to-keystore]]
-=== Add string settings
+=== Adding string settings
 
 Sensitive string settings, like authentication credentials for Elasticsearch
 can be added using the `add` command:
@@ -65,7 +65,7 @@ cat /file/containing/setting/value | bin/kibana-keystore add the.setting.name.to
 
 [float]
 [[remove-settings]]
-=== Remove settings
+=== Removing settings
 
 To remove a setting from the keystore, use the `remove` command:
 

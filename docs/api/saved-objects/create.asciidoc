@@ -1,89 +1,57 @@
 [[saved-objects-api-create]]
-=== Create saved objects API
-++++
-<titleabbrev>Create saved objects</titleabbrev>
-++++
+=== Create Object
 
-experimental[] Create {kib} saved objects.
+experimental[This functionality is *experimental* and may be changed or removed completely in a future release.]
 
-[[saved-objects-api-create-request]]
+The create saved object API enables you to persist a Kibana saved object.
+
 ==== Request
 
-`POST <kibana host>:<port>/api/saved_objects/<type>`
+`POST /api/saved_objects/<type>` +
 
-`POST <kibana host>:<port>/api/saved_objects/<type>/<id>`
+`POST /api/saved_objects/<type>/<id>`
 
-`POST <kibana host>:<port>/s/<space_id>/api/saved_objects/<type>`
+==== Path Parameters
 
-`POST <kibana host>:<port>/s/<space_id>/api/saved_objects/<type>/<id>`
+`type` (required)::
+  (string) Valid options, include: `visualization`, `dashboard`, `search`, `index-pattern`, `config`, and `timelion-sheet`
 
-[[saved-objects-api-create-path-params]]
-==== Path parameters
+`id` (optional)::
+  (string) Enables specifying an ID to use, as opposed to one being randomly generated
 
-`space_id`::
-  (Optional, string) An identifier for the space. If `space_id` is not provided in the URL, the default space is used.
 
-`<type>`::
-  (Required, string) Valid options include `visualization`, `dashboard`, `search`, `index-pattern`, `config`.
+==== Query Parameters
 
-`<id>`::
-  (Optional, string) Specifies an ID instead of using a randomly generated ID.
+`overwrite` (optional)::
+  (boolean) If true, will overwrite the document with the same ID.
 
-[[saved-objects-api-create-query-params]]
-==== Query parameters
 
-`overwrite`::
-  (Optional, boolean) When true, overwrites the document with the same ID.
+==== Request Body
 
-[[saved-objects-api-create-request-body]]
-==== Request body
+`attributes` (required)::
+  (object) The data to persist
 
-`attributes`::
-  (Required, object) The data that you want to create.
-+
-WARNING: When you create saved objects, attributes are not validated, which allows you to pass
-arbitrary and ill-formed data into the API that can break {kib}. Make sure
-any data that you send to the API is properly formed.
 
-`references`::
-  (Optional, array) Objects with `name`, `id`, and `type` properties that describe the other saved objects that this object references. Use `name` in attributes to refer to the other saved object, but never the `id`, which can update automatically during migrations or import/export.
+==== Examples
 
-`initialNamespaces`::
-  (Optional, string array) Identifiers for the <<xpack-spaces,spaces>> in which this object is created. If this is provided, the
-  object is created only in the explicitly defined spaces. If this is not provided, the object is created in the current space
-  (default behavior).
-* For shareable object types (registered with `namespaceType: 'multiple'`): this option can be used to specify one or more spaces, including
-the "All spaces" identifier (`'*'`).
-* For isolated object types (registered with `namespaceType: 'single'` or `namespaceType: 'multiple-isolated'`): this option can only be
-used to specify a single space, and the "All spaces" identifier (`'*'`) is not allowed.
-* For global object types (registered with `namespaceType: 'agnostic'): this option cannot be used.
+The following example creates an index pattern object with a pattern of
+`my-pattern-*`.
 
-[[saved-objects-api-create-request-codes]]
-==== Response code
-
-`200`::
-    Indicates a successful call.
-
-`409`::
-    Indicates a <<saved-objects-api-create-conflict-errors,conflict error>>.
-
-[[saved-objects-api-create-example]]
-==== Example
-
-[source,sh]
+[source,js]
 --------------------------------------------------
-$ curl -X POST api/saved_objects/index-pattern/my-pattern  -H 'kbn-xsrf: true' -H 'Content-Type: application/json' -d '
+POST api/saved_objects/index-pattern/my-pattern
 {
   "attributes": {
     "title": "my-pattern-*"
   }
-}'
+}
 --------------------------------------------------
 // KIBANA
 
-The API returns the following:
+A successful call returns a response code of `200` and a response body
+containing a JSON structure similar to the following example:
 
-[source,sh]
+[source,js]
 --------------------------------------------------
 {
   "id": "my-pattern", <1>
@@ -95,12 +63,11 @@ The API returns the following:
 }
 --------------------------------------------------
 
-<1> When `my-pattern` is unspecified in the path, a unique ID is automatically generated.
+<1> If `my-pattern` was not specified in the path, a unique ID would have been
+generated.
 
-[[saved-objects-api-create-conflict-errors]]
-==== Conflict errors
+==== Known issues
 
-Starting in {kib} 8.0, saved objects can exist in multiple spaces. As a result, you may encounter different types of conflict errors when
-attempting to create an object. If you encounter a 409 error that cannot be overridden by using the `overwrite: true` option, you are likely
-hitting a different type of conflict error. The Create API response is limited and does not include additional metadata. You can get more
-details about this error by using the <<saved-objects-api-bulk-create,Bulk create API>> instead.
+1. *Attributes are not validated at creation time*. This means you can pass
+arbitrary and ill-formed data into this API that can break Kibana. Make sure
+any data you send to this API is properly formed.

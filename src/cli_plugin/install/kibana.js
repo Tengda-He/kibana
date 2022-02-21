@@ -1,41 +1,49 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import path from 'path';
+import execa from 'execa';
+import { fromRoot, watchStdioForLine } from '../../utils';
+import { versionSatisfies, cleanVersion } from '../../utils/version';
 import { statSync } from 'fs';
-
-import { versionSatisfies, cleanVersion } from './utils/version';
 
 export function existingInstall(settings, logger) {
   try {
-    statSync(path.join(settings.pluginDir, settings.plugins[0].id));
+    statSync(path.join(settings.pluginDir, settings.plugins[0].name));
 
-    logger.error(
-      `Plugin ${settings.plugins[0].id} already exists, please remove before installing a new version`
-    );
-    process.exit(70);
+    logger.error(`Plugin ${settings.plugins[0].name} already exists, please remove before installing a new version`);
+    process.exit(70); // eslint-disable-line no-process-exit
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
   }
 }
 
+export async function rebuildCache(settings, logger) {
+  logger.log('Optimizing and caching browser bundles...');
+
+  const kibanaArgs = [
+    fromRoot('./src/cli'),
+    '--env.name=production',
+    '--optimize.useBundleCache=false',
+    '--server.autoListen=false',
+    '--plugins.initialize=false',
+    '--uiSettings.enabled=false'
+  ];
+
+  const proc = execa(process.execPath, kibanaArgs, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: fromRoot('.'),
+  });
+
+  await watchStdioForLine(proc, () => {}, /Optimization .+ complete/);
+}
+
 export function assertVersion(settings) {
   if (!settings.plugins[0].kibanaVersion) {
-    throw new Error(
-      `Plugin kibana.json is missing both a version property (required) and a kibanaVersion property (optional).`
-    );
+    throw new Error (`Plugin package.json is missing both a version property (required) and a kibana.version property (optional).`);
   }
 
   const actual = cleanVersion(settings.plugins[0].kibanaVersion);
   const expected = cleanVersion(settings.version);
   if (!versionSatisfies(actual, expected)) {
-    throw new Error(
-      `Plugin ${settings.plugins[0].id} [${actual}] is incompatible with Kibana [${expected}]`
-    );
+    throw new Error (`Incorrect Kibana version in plugin [${settings.plugins[0].name}]. ` +
+      `Expected [${expected}]; found [${actual}]`);
   }
 }

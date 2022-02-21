@@ -1,12 +1,7 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-export async function parallelizeBatches<T>(batches: T[][], fn: (item: T) => Promise<void>) {
+export async function parallelizeBatches<T>(
+  batches: T[][],
+  fn: (item: T) => Promise<void>
+) {
   for (const batch of batches) {
     // We need to make sure the entire batch has completed before we can move on
     // to the next batch
@@ -14,7 +9,11 @@ export async function parallelizeBatches<T>(batches: T[][], fn: (item: T) => Pro
   }
 }
 
-export async function parallelize<T>(items: T[], fn: (item: T) => Promise<void>, concurrency = 4) {
+export async function parallelize<T>(
+  items: T[],
+  fn: (item: T) => Promise<void>,
+  concurrency = 4
+) {
   if (items.length === 0) {
     return;
   }

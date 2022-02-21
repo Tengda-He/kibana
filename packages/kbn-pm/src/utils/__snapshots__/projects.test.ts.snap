@@ -14,9 +14,6 @@ Object {
     "bar",
     "baz",
   ],
-  "zorge": Array [
-    "foo",
-  ],
 }
 `;
 
@@ -29,7 +26,6 @@ Array [
   Array [
     "kibana",
     "bar",
-    "zorge",
   ],
   Array [
     "quux",
@@ -43,7 +39,6 @@ Array [
     "kibana",
     "bar",
     "baz",
-    "zorge",
   ],
   Array [
     "quux",

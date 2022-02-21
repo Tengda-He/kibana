@@ -1,13 +1,6 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
 
 /**
- * These patterns are used to identify files that are not supposed
+ * These patterns are used to identifiy files that are not supposed
  * to be snake_case because their names are determined by other
  * systems or rules.
  *
@@ -15,62 +8,18 @@
  */
 export const IGNORE_FILE_GLOBS = [
   '.node-version',
-  '.github/**/*',
   'docs/**/*',
   '**/bin/**/*',
   '**/+([A-Z_]).md',
-  '**/+([A-Z_]).mdx',
-  '**/+([A-Z_]).asciidoc',
-  '**/LICENSE',
   '**/*.txt',
+  '**/Gruntfile.js',
+  'tasks/config/**/*',
   '**/{Dockerfile,docker-compose.yml}',
-  'x-pack/plugins/canvas/tasks/**/*',
-  'x-pack/plugins/canvas/canvas_plugin_src/**/*',
-  'x-pack/plugins/cases/docs/**/*',
-  'x-pack/plugins/monitoring/public/lib/jquery_flot/**/*',
+  'x-pack/plugins/apm/**/*',
   '**/.*',
-  '**/__mocks__/**/*',
-  'x-pack/docs/**/*',
-  'src/core/server/core_app/assets/fonts/**/*',
-  'src/dev/code_coverage/ingest_coverage/integration_tests/mocks/**/*',
-  'packages/kbn-utility-types/test-d/**/*',
-  '**/Jenkinsfile*',
-  'Dockerfile*',
-  'vars/*',
-  '.ci/pipeline-library/**/*',
-  'packages/kbn-test/jest-preset.js',
-  'packages/kbn-test/jest_integration/jest-preset.js',
-  'test/package/Vagrantfile',
-  '**/test/**/fixtures/**/*',
-
-  // Required to match the name in the docs.elastic.dev repo.
-  'nav-kibana-dev.docnav.json',
-
-  // filename must match language code which requires capital letters
-  '**/translations/*.json',
-
-  // Storybook has predetermined filesnames
-  '**/preview-body.html',
-  '**/preview-head.html',
-
-  // filename required by api-extractor
-  'api-documenter.json',
-
-  // filename must match upstream filenames from lodash
-  'packages/elastic-safer-lodash-set/**/*',
-
-  'x-pack/plugins/maps/server/fonts/**/*',
-
-  // Bundled package names typically use a format like ${pkgName}-${pkgVersion}, so don't lint them
-  'x-pack/plugins/fleet/server/bundled_packages/**/*',
-
-  // Bazel default files
-  '**/WORKSPACE.bazel',
-  '**/BUILD.bazel',
-
-  // Buildkite
-  '.buildkite/**/*',
+  '**/{webpackShims,__mocks__}/**/*',
 ];
+
 
 /**
  * These patterns are matched against directories and indicate
@@ -78,7 +27,11 @@ export const IGNORE_FILE_GLOBS = [
  *
  * @type {Array}
  */
-export const KEBAB_CASE_DIRECTORY_GLOBS = ['packages/*', 'x-pack'];
+export const KEBAB_CASE_DIRECTORY_GLOBS = [
+  'packages/*',
+  'x-pack',
+];
+
 
 /**
  * These patterns are matched against directories and indicate
@@ -87,7 +40,7 @@ export const KEBAB_CASE_DIRECTORY_GLOBS = ['packages/*', 'x-pack'];
  * When a file in one of these directories is checked, the directory
  * matched by these patterns is removed from the path before
  * the casing check so that the files casing is still checked. This
- * allows folders like `src/legacy/ui/public/flot-charts` to exist, which
+ * allows folders like `src/ui/public/flot-charts` to exist, which
  * is named to match the npm package and follow the kebab-casing
  * convention there, but allows us to still verify that files within
  * that directory use snake_case
@@ -96,21 +49,18 @@ export const KEBAB_CASE_DIRECTORY_GLOBS = ['packages/*', 'x-pack'];
  */
 export const IGNORE_DIRECTORY_GLOBS = [
   ...KEBAB_CASE_DIRECTORY_GLOBS,
+  '**/webpackShims',
   'src/babel-*',
   'packages/*',
+  'packages/kbn-ui-framework/generator-kui',
+  'src/ui/public/angular-bootstrap',
+  'src/ui/public/flot-charts',
+  'src/ui/public/utils/lodash-mixins',
+  'test/functional/fixtures/es_archiver/visualize_source-filters',
   'packages/kbn-pm/src/utils/__fixtures__/*',
   'x-pack/dev-tools',
-  'packages/kbn-optimizer/src/__fixtures__/mock_repo/x-pack',
-  'typings/*',
 ];
 
-/**
- * These patterns identify files which should have the extension stripped
- * to reveal the actual name that should be checked.
- *
- * @type {Array}
- */
-export const REMOVE_EXTENSION = ['packages/kbn-plugin-generator/template/**/*.ejs'];
 
 /**
  * DO NOT ADD FILES TO THIS LIST!!
@@ -127,29 +77,148 @@ export const REMOVE_EXTENSION = ['packages/kbn-plugin-generator/template/**/*.ej
  * @type {Array}
  */
 export const TEMPORARILY_IGNORED_PATHS = [
-  'src/core/server/core_app/assets/favicons/android-chrome-192x192.png',
-  'src/core/server/core_app/assets/favicons/android-chrome-256x256.png',
-  'src/core/server/core_app/assets/favicons/android-chrome-512x512.png',
-  'src/core/server/core_app/assets/favicons/apple-touch-icon.png',
-  'src/core/server/core_app/assets/favicons/favicon-16x16.png',
-  'src/core/server/core_app/assets/favicons/favicon-32x32.png',
-  'src/core/server/core_app/assets/favicons/mstile-70x70.png',
-  'src/core/server/core_app/assets/favicons/mstile-144x144.png',
-  'src/core/server/core_app/assets/favicons/mstile-150x150.png',
-  'src/core/server/core_app/assets/favicons/mstile-310x150.png',
-  'src/core/server/core_app/assets/favicons/mstile-310x310.png',
-  'src/core/server/core_app/assets/favicons/safari-pinned-tab.svg',
+  'src/core_plugins/console/public/src/directives/helpExample.txt',
+  'src/core_plugins/console/public/src/sense_editor/theme-sense-dark.js',
+  'src/core_plugins/console/public/tests/webpackShims/qunit-1.10.0.css',
+  'src/core_plugins/console/public/tests/webpackShims/qunit-1.10.0.js',
+  'src/core_plugins/console/public/webpackShims/ace/ext-language_tools.js',
+  'src/core_plugins/console/public/webpackShims/ace/ext-searchbox.js',
+  'src/core_plugins/console/public/webpackShims/ace/mode-json.js',
+  'src/core_plugins/console/public/webpackShims/ace/mode-yaml.js',
+  'src/core_plugins/console/public/webpackShims/ace/worker-json.js',
+  'src/core_plugins/console/public/webpackShims/ui-bootstrap-custom.js',
+  'src/core_plugins/input_control_vis/public/images/icon-input-control.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-area.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-donut.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-gauge.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-goal.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-heatmap.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-horizontal.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-line.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-number.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-pie.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-tilemap.svg',
+  'src/core_plugins/kbn_vislib_vis_types/public/images/icon-vertical.svg',
+  'src/core_plugins/kibana/public/assets/play-circle.svg',
+  'src/core_plugins/markdown_vis/public/images/icon-markdown.svg',
+  'src/core_plugins/metric_vis/public/images/icon-number.svg',
+  'src/core_plugins/metrics/public/images/icon-visualbuilder.svg',
+  'src/core_plugins/region_map/public/images/icon-vector-map.svg',
+  'src/core_plugins/table_vis/public/images/icon-table.svg',
+  'src/core_plugins/tagcloud/public/images/icon-tagcloud.svg',
+  'src/core_plugins/tests_bundle/webpackShims/angular-mocks.js',
+  'src/core_plugins/tile_map/public/__tests__/scaledCircleMarkers.png',
+  'src/core_plugins/tile_map/public/__tests__/shadedCircleMarkers.png',
+  'src/core_plugins/tile_map/public/__tests__/shadedGeohashGrid.png',
+  'src/core_plugins/tile_map/public/images/icon-tilemap.svg',
+  'src/core_plugins/timelion/public/images/icon-timelion.svg',
+  'src/core_plugins/timelion/server/lib/asSorted.js',
+  'src/core_plugins/timelion/server/lib/unzipPairs.js',
+  'src/core_plugins/timelion/server/series_functions/__tests__/fixtures/bucketList.js',
+  'src/core_plugins/timelion/server/series_functions/__tests__/fixtures/seriesList.js',
+  'src/core_plugins/timelion/server/series_functions/__tests__/fixtures/tlConfig.js',
+  'src/fixtures/config_upgrade_from_4.0.0_to_4.0.1-snapshot.json',
+  'src/fixtures/vislib/mock_data/terms/_seriesMultiple.js',
+  'src/ui/i18n/__tests__/fixtures/translations/test_plugin_1/es-ES.json',
+  'src/ui/public/angular-bootstrap/accordion/accordion-group.html',
+  'src/ui/public/angular-bootstrap/bindHtml/bindHtml.js',
+  'src/ui/public/angular-bootstrap/tooltip/tooltip-html-unsafe-popup.html',
+  'src/ui/public/angular-bootstrap/tooltip/tooltip-popup.html',
+  'src/ui/public/angular-bootstrap/typeahead/typeahead-match.html',
+  'src/ui/public/angular-bootstrap/typeahead/typeahead-popup.html',
+  'src/ui/public/assets/favicons/android-chrome-192x192.png',
+  'src/ui/public/assets/favicons/android-chrome-256x256.png',
+  'src/ui/public/assets/favicons/apple-touch-icon.png',
+  'src/ui/public/assets/favicons/favicon-16x16.png',
+  'src/ui/public/assets/favicons/favicon-32x32.png',
+  'src/ui/public/assets/favicons/mstile-150x150.png',
+  'src/ui/public/assets/favicons/safari-pinned-tab.svg',
+  'src/ui/public/directives/__tests__/confirm-click.js',
+  'src/ui/public/dragula/gu-dragula.less',
+  'src/ui/public/field_format_editor/editors/url/icons/flag-icon.LICENSE',
+  'src/ui/public/icons/beats-color.svg',
+  'src/ui/public/icons/beats-gray.svg',
+  'src/ui/public/icons/elasticsearch-color.svg',
+  'src/ui/public/icons/elasticsearch-gray.svg',
+  'src/ui/public/icons/kibana-color.svg',
+  'src/ui/public/icons/kibana-gray.svg',
+  'src/ui/public/icons/logstash-color.svg',
+  'src/ui/public/icons/logstash-gray.svg',
+  'src/ui/public/icons/security-gray.svg',
+  'src/ui/public/query_bar/lib/queryLanguages.js',
+  'src/ui/public/styles/bootstrap/component-animations.less',
+  'src/ui/public/styles/bootstrap/input-groups.less',
+  'src/ui/public/styles/bootstrap/list-group.less',
+  'src/ui/public/styles/bootstrap/mixins/background-variant.less',
+  'src/ui/public/styles/bootstrap/mixins/border-radius.less',
+  'src/ui/public/styles/bootstrap/mixins/center-block.less',
+  'src/ui/public/styles/bootstrap/mixins/grid-framework.less',
+  'src/ui/public/styles/bootstrap/mixins/hide-text.less',
+  'src/ui/public/styles/bootstrap/mixins/list-group.less',
+  'src/ui/public/styles/bootstrap/mixins/nav-divider.less',
+  'src/ui/public/styles/bootstrap/mixins/nav-vertical-align.less',
+  'src/ui/public/styles/bootstrap/mixins/progress-bar.less',
+  'src/ui/public/styles/bootstrap/mixins/reset-filter.less',
+  'src/ui/public/styles/bootstrap/mixins/reset-text.less',
+  'src/ui/public/styles/bootstrap/mixins/responsive-visibility.less',
+  'src/ui/public/styles/bootstrap/mixins/tab-focus.less',
+  'src/ui/public/styles/bootstrap/mixins/table-row.less',
+  'src/ui/public/styles/bootstrap/mixins/text-emphasis.less',
+  'src/ui/public/styles/bootstrap/mixins/text-overflow.less',
+  'src/ui/public/styles/bootstrap/mixins/vendor-prefixes.less',
+  'src/ui/public/styles/bootstrap/progress-bars.less',
+  'src/ui/public/styles/bootstrap/responsive-utilities.less',
+  'src/ui/public/styles/dark-theme.less',
+  'src/ui/public/styles/dark-variables.less',
+  'src/ui/public/styles/fonts/glyphicons-halflings-regular.eot',
+  'src/ui/public/styles/fonts/glyphicons-halflings-regular.svg',
+  'src/ui/public/styles/fonts/glyphicons-halflings-regular.ttf',
+  'src/ui/public/styles/fonts/glyphicons-halflings-regular.woff',
+  'src/ui/public/styles/fonts/glyphicons-halflings-regular.woff2',
+  'src/ui/public/styles/list-group-menu.less',
+  'src/ui/public/styles/react-input-range.less',
+  'src/ui/public/styles/react-select.less',
+  'src/ui/public/styles/theme/font-awesome.less',
+  'src/ui/public/styles/variables/bootstrap-mods.less',
+  'src/ui/public/styles/variables/for-theme.less',
+  'src/ui/public/typeahead/partials/typeahead-items.html',
+  'src/ui/public/utils/migrateLegacyQuery.js',
   'test/functional/apps/management/exports/_import_objects-conflicts.json',
-  'x-pack/legacy/plugins/index_management/public/lib/editSettings.js',
-  'x-pack/legacy/plugins/license_management/public/store/reducers/licenseManagement.js',
-  'x-pack/plugins/monitoring/public/icons/health-gray.svg',
-  'x-pack/plugins/monitoring/public/icons/health-green.svg',
-  'x-pack/plugins/monitoring/public/icons/health-red.svg',
-  'x-pack/plugins/monitoring/public/icons/health-yellow.svg',
-  'x-pack/plugins/reporting/server/export_types/common/assets/fonts/noto/NotoSansCJKtc-Medium.ttf',
-  'x-pack/plugins/reporting/server/export_types/common/assets/fonts/noto/NotoSansCJKtc-Regular.ttf',
-  'x-pack/plugins/reporting/server/export_types/common/assets/fonts/roboto/Roboto-Italic.ttf',
-  'x-pack/plugins/reporting/server/export_types/common/assets/fonts/roboto/Roboto-Medium.ttf',
-  'x-pack/plugins/reporting/server/export_types/common/assets/fonts/roboto/Roboto-Regular.ttf',
-  'x-pack/plugins/reporting/server/export_types/common/assets/img/logo-grey.png',
+  'packages/kbn-ui-framework/doc_site/src/images/elastic-logo.svg',
+  'packages/kbn-ui-framework/doc_site/src/images/hint-arrow.svg',
+  'packages/kbn-ui-framework/doc_site/src/images/react-logo.svg',
+  'webpackShims/angular-ui-select.js',
+  'webpackShims/elasticsearch-browser.js',
+  'webpackShims/moment-timezone.js',
+  'webpackShims/ui-bootstrap.js',
+  'x-pack/plugins/graph/public/graphClientWorkspace.js',
+  'x-pack/plugins/graph/public/angular-venn-simple.js',
+  'x-pack/plugins/index_management/public/lib/editSettings.js',
+  'x-pack/plugins/license_management/public/store/reducers/licenseManagement.js',
+  'x-pack/plugins/ml/server/client/__tests__/elasticsearch-ml.js',
+  'x-pack/plugins/ml/server/client/elasticsearch-ml.js',
+  'x-pack/plugins/monitoring/public/components/sparkline/__mocks__/jquery-flot.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/components/clusterView.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/components/tableBody.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/components/tableHead.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/directives/clusterView.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/__tests__/decorateShards.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/calculateClass.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/decorateShards.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/generateQueryAndLink.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/hasPrimaryChildren.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/lib/hasUnassigned.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/transformers/indicesByNodes.js',
+  'x-pack/plugins/monitoring/public/directives/elasticsearch/shard_allocation/transformers/nodesByIndices.js',
+  'x-pack/server/lib/elasticsearch-shield-js/elasticsearch-shield.js',
+  'x-pack/server/lib/elasticsearch-shield-js/generate/Method.js',
+  'x-pack/server/lib/elasticsearch-shield-js/generate/ParamList.js',
+  'x-pack/server/lib/elasticsearch-shield-js/generate/index.js',
+  'x-pack/server/lib/elasticsearch-shield-js/generate/templateHelpers.js',
+  'x-pack/server/lib/elasticsearch-shield-js/test/Catcher.js',
+  'x-pack/server/lib/elasticsearch-shield-js/test/YamlDoc.js',
+  'x-pack/server/lib/elasticsearch-shield-js/test/YamlFile.js',
+  'x-pack/server/lib/elasticsearch-shield-js/test/client.js',
+  'x-pack/server/lib/elasticsearch-shield-js/test/read.js',
+  'x-pack/test/api_integration/apis/monitoring/elasticsearch/nodes-listing.js',
 ];

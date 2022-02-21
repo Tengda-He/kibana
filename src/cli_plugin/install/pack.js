@@ -1,17 +1,5 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import { analyzeArchive, extractArchive } from './zip';
-
-const CAMEL_CASE_REG_EXP = /^[a-z]{1}([a-zA-Z0-9]{1,})$/;
-export function isCamelCase(candidate) {
-  return CAMEL_CASE_REG_EXP.test(candidate);
-}
+import validate from 'validate-npm-package-name';
 
 /**
  * Checks the plugin name. Will throw an exception if it does not meet
@@ -20,10 +8,9 @@ export function isCamelCase(candidate) {
  * @param {object} plugin - a package object from listPackages()
  */
 function assertValidPackageName(plugin) {
-  if (!isCamelCase(plugin.id)) {
-    throw new Error(
-      `Invalid plugin name [${plugin.id}] in kibana.json, expected it to be valid camelCase`
-    );
+  const validation = validate(plugin.name);
+  if (!validation.validForNewPackages) {
+    throw new Error(`Invalid plugin name [${plugin.name}] in package.json`);
   }
 }
 
@@ -54,13 +41,17 @@ export async function getPackData(settings, logger) {
 
 /**
  * Extracts files from a zip archive to a file path using a filter function
+ *
+ * @param {string} archive - file path to a zip archive
+ * @param {string} targetDir - directory path to where the files should
+ *  extracted
  */
 export async function extract(settings, logger) {
   try {
     const plugin = settings.plugins[0];
 
     logger.log('Extracting plugin archive');
-    await extractArchive(settings.tempArchiveFile, settings.workingPath, plugin.stripPrefix);
+    await extractArchive(settings.tempArchiveFile, settings.workingPath, plugin.archivePath);
     logger.log('Extraction complete');
   } catch (err) {
     logger.error(err.stack);

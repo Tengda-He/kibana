@@ -1,34 +1,23 @@
 /*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
+ * Licensed to Elasticsearch B.V. under one or more contributor
+ * license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright
+ * ownership. Elasticsearch B.V. licenses this file to you under
+ * the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
-import { createAbsolutePathSerializer } from '@kbn/dev-utils';
-
 import { displayHelp, processOptions } from './args';
-
-jest.mock('../../../functional_test_runner/lib/es_version', () => {
-  return {
-    EsVersion: class {
-      static getDefault() {
-        return '999.999.999';
-      }
-    },
-  };
-});
-
-expect.addSnapshotSerializer(createAbsolutePathSerializer(process.cwd()));
-
-const INITIAL_TEST_ES_FROM = process.env.TEST_ES_FROM;
-beforeEach(() => {
-  process.env.TEST_ES_FROM = 'snapshot';
-});
-afterEach(() => {
-  process.env.TEST_ES_FROM = INITIAL_TEST_ES_FROM;
-});
 
 describe('display help for run tests CLI', () => {
   it('displays as expected', () => {
@@ -68,16 +57,13 @@ describe('process options for run tests CLI', () => {
   it('rejects boolean value for kibana-install-dir', () => {
     expect(() => {
       processOptions({ 'kibana-install-dir': true }, ['foo']);
-    }).toThrow('functional_tests: invalid argument [true] to option [kibana-install-dir]');
+    }).toThrow(
+      'functional_tests: invalid argument [true] to option [kibana-install-dir]'
+    );
   });
 
   it('accepts boolean value for updateBaselines', () => {
     const options = processOptions({ updateBaselines: true }, ['foo']);
-    expect(options).toMatchSnapshot();
-  });
-
-  it('accepts boolean value for updateSnapshots', () => {
-    const options = processOptions({ updateSnapshots: true }, ['foo']);
     expect(options).toMatchSnapshot();
   });
 
@@ -86,22 +72,12 @@ describe('process options for run tests CLI', () => {
     expect(options).toMatchSnapshot();
   });
 
-  it('accepts source value for $TEST_ES_FROM', () => {
-    process.env.TEST_ES_FROM = 'source';
-    const options = processOptions({}, ['foo']);
-    expect(options).toMatchSnapshot();
-  });
-
-  it('prioritizes source flag over $TEST_ES_FROM', () => {
-    process.env.TEST_ES_FROM = 'source';
-    const options = processOptions({ esFrom: 'snapshot' }, ['foo']);
-    expect(options).toMatchSnapshot();
-  });
-
   it('rejects non-enum value for esFrom', () => {
     expect(() => {
       processOptions({ esFrom: 'butter' }, ['foo']);
-    }).toThrow('functional_tests: invalid argument [butter] to option [esFrom]');
+    }).toThrow(
+      'functional_tests: invalid argument [butter] to option [esFrom]'
+    );
   });
 
   it('accepts value for grep', () => {

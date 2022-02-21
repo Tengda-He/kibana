@@ -1,67 +1,53 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import { Writable } from 'stream';
-
-import chalk from 'chalk';
 import execa from 'execa';
+import chalk from 'chalk';
 import logTransformer from 'strong-log-transformer';
+import logSymbols from 'log-symbols';
 
-import { log } from './log';
+function generateColors() {
+  const colorWheel = [
+    chalk.cyan,
+    chalk.magenta,
+    chalk.blue,
+    chalk.yellow,
+    chalk.green,
+    chalk.red,
+  ];
 
-const colorWheel = [chalk.cyan, chalk.magenta, chalk.blue, chalk.yellow, chalk.green];
-const getColor = () => {
-  const color = colorWheel.shift()!;
-  colorWheel.push(color);
-  return color;
-};
+  const count = colorWheel.length;
+  let children = 0;
+
+  return () => colorWheel[children++ % count];
+}
 
 export function spawn(command: string, args: string[], opts: execa.Options) {
   return execa(command, args, {
-    stdio: 'inherit',
-    preferLocal: true,
     ...opts,
+    stdio: 'inherit',
   });
 }
 
-function streamToLog(debug: boolean = true) {
-  return new Writable({
-    objectMode: true,
-    write(line, _, cb) {
-      if (line.endsWith('\n')) {
-        log[debug ? 'debug' : 'write'](line.slice(0, -1));
-      } else {
-        log[debug ? 'debug' : 'write'](line);
-      }
-
-      cb();
-    },
-  });
-}
+const nextColor = generateColors();
 
 export function spawnStreaming(
   command: string,
   args: string[],
   opts: execa.Options,
-  { prefix, debug }: { prefix: string; debug?: boolean }
+  { prefix }: { prefix: string }
 ) {
   const spawned = execa(command, args, {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    preferLocal: true,
     ...opts,
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
 
-  const color = getColor();
-  const prefixedStdout = logTransformer({ tag: color.bold(prefix) });
-  const prefixedStderr = logTransformer({ mergeMultiline: true, tag: color.bold(prefix) });
+  const color = nextColor();
+  const prefixedStdout = logTransformer({ tag: `${color.bold(prefix)}:` });
+  const prefixedStderr = logTransformer({
+    tag: `${logSymbols.error} ${color.bold(prefix)}:`,
+    mergeMultiline: true,
+  });
 
-  spawned.stdout!.pipe(prefixedStdout).pipe(streamToLog(debug)); // TypeScript note: As long as the proc stdio[1] is 'pipe', then stdout will not be null
-  spawned.stderr!.pipe(prefixedStderr).pipe(streamToLog(debug)); // TypeScript note: As long as the proc stdio[2] is 'pipe', then stderr will not be null
+  spawned.stdout.pipe(prefixedStdout).pipe(process.stdout);
+  spawned.stderr.pipe(prefixedStderr).pipe(process.stderr);
 
   return spawned;
 }

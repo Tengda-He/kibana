@@ -1,19 +1,11 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
+import { resolve, join } from 'path';
 
-import { join, resolve } from 'path';
-
-import { IPackageJson } from './package_json';
+import { PackageJson } from './package_json';
 import { Project } from './project';
 
 const rootPath = resolve(`${__dirname}/__fixtures__/kibana`);
 
-const createProjectWith = (packageJson: IPackageJson, path = '') =>
+const createProjectWith = (packageJson: PackageJson, path = '') =>
   new Project(
     {
       name: 'kibana',
@@ -33,11 +25,11 @@ describe('fromPath', () => {
 
 test('fields', async () => {
   const kibana = createProjectWith({
-    dependencies: {
-      foo: '1.2.3',
-    },
     scripts: {
       test: 'jest',
+    },
+    dependencies: {
+      foo: '1.2.3',
     },
   });
 
@@ -85,7 +77,9 @@ describe('#ensureValidProjectDependency', () => {
       'packages/foo'
     );
 
-    expect(() => root.ensureValidProjectDependency(foo)).toThrowErrorMatchingSnapshot();
+    expect(() =>
+      root.ensureValidProjectDependency(foo)
+    ).toThrowErrorMatchingSnapshot();
   });
 
   test('using version instead of link:', () => {
@@ -105,7 +99,9 @@ describe('#ensureValidProjectDependency', () => {
       'packages/foo'
     );
 
-    expect(() => root.ensureValidProjectDependency(foo)).toThrowErrorMatchingSnapshot();
+    expect(() =>
+      root.ensureValidProjectDependency(foo)
+    ).toThrowErrorMatchingSnapshot();
   });
 });
 
@@ -142,7 +138,9 @@ describe('#getExecutables()', () => {
   });
 
   test('throws CliError when bin is something strange', () => {
-    expect(() => createProjectWith({ bin: 1 }).getExecutables()).toThrowErrorMatchingSnapshot();
+    expect(() =>
+      createProjectWith({ bin: 1 }).getExecutables()
+    ).toThrowErrorMatchingSnapshot();
   });
 });
 

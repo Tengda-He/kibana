@@ -1,41 +1,26 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import readPkg from 'read-pkg';
 import writePkg from 'write-pkg';
+import path from 'path';
 
-export interface IPackageJson {
-  [key: string]: any;
-}
-export interface IPackageDependencies {
-  [key: string]: string;
-}
-export interface IPackageScripts {
-  [key: string]: string;
-}
+export type PackageJson = { [key: string]: any };
+export type PackageDependencies = { [key: string]: string };
+export type PackageScripts = { [key: string]: string };
 
-export function readPackageJson(cwd: string): IPackageJson {
-  return readPkg({ cwd, normalize: false });
+export function readPackageJson(dir: string) {
+  return readPkg(dir, { normalize: false });
 }
 
-export function writePackageJson(path: string, json: IPackageJson) {
+export function writePackageJson(path: string, json: PackageJson) {
   return writePkg(path, json);
 }
 
-export const createProductionPackageJson = (pkgJson: IPackageJson) => ({
+export const createProductionPackageJson = (pkgJson: PackageJson) => ({
   ...pkgJson,
   dependencies: transformDependencies(pkgJson.dependencies),
 });
 
-export const isLinkDependency = (depVersion: string) => depVersion.startsWith('link:');
-
-export const isBazelPackageDependency = (depVersion: string) =>
-  depVersion.startsWith('link:bazel-bin/');
+export const isLinkDependency = (depVersion: string) =>
+  depVersion.startsWith('link:');
 
 /**
  * Replaces `link:` dependencies with `file:` dependencies. When installing
@@ -45,27 +30,16 @@ export const isBazelPackageDependency = (depVersion: string) =>
  * This will allow us to copy packages into the build and run `yarn`, which
  * will then _copy_ the `file:` dependencies into `node_modules` instead of
  * symlinking like we do in development.
- *
- * Additionally it also taken care of replacing `link:bazel-bin/` with
- * `file:` so we can also support the copy of the Bazel packages dist already into
- * build/packages to be copied into the node_modules
  */
-export function transformDependencies(dependencies: IPackageDependencies = {}) {
-  const newDeps: IPackageDependencies = {};
+export function transformDependencies(dependencies: PackageDependencies = {}) {
+  const newDeps: PackageDependencies = {};
   for (const name of Object.keys(dependencies)) {
     const depVersion = dependencies[name];
-
-    if (!isLinkDependency(depVersion)) {
+    if (isLinkDependency(depVersion)) {
+      newDeps[name] = depVersion.replace('link:', 'file:');
+    } else {
       newDeps[name] = depVersion;
-      continue;
     }
-
-    if (isBazelPackageDependency(depVersion)) {
-      newDeps[name] = depVersion.replace('link:bazel-bin/', 'file:');
-      continue;
-    }
-
-    newDeps[name] = depVersion.replace('link:', 'file:');
   }
   return newDeps;
 }

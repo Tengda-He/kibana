@@ -1,137 +1,101 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import Fs from 'fs';
-import Path from 'path';
+import path from 'path';
 import { inspect } from 'util';
+import chalk from 'chalk';
 
-import { CliError } from './errors';
-import { log } from './log';
 import {
-  IPackageDependencies,
-  IPackageJson,
-  IPackageScripts,
+  installInDir,
+  runScriptInPackage,
+  runScriptInPackageStreaming,
+} from './scripts';
+import {
+  PackageJson,
+  PackageDependencies,
+  PackageScripts,
   isLinkDependency,
   readPackageJson,
 } from './package_json';
-import { installInDir, runScriptInPackage, runScriptInPackageStreaming } from './scripts';
+import { CliError } from './errors';
 
 interface BuildConfig {
   skip?: boolean;
   intermediateBuildDirectory?: string;
-  oss?: boolean;
-}
-
-interface CleanConfig {
-  extraPatterns?: string[];
 }
 
 export class Project {
-  public static async fromPath(path: string) {
+  static async fromPath(path: string) {
     const pkgJson = await readPackageJson(path);
     return new Project(pkgJson, path);
   }
 
-  /** parsed package.json */
-  public readonly json: IPackageJson;
-  /** absolute path to the package.json file in the project */
+  public readonly json: PackageJson;
   public readonly packageJsonLocation: string;
-  /** absolute path to the node_modules in the project (might not actually exist) */
   public readonly nodeModulesLocation: string;
-  /** absolute path to the target directory in the project (might not actually exist) */
   public readonly targetLocation: string;
-  /** absolute path to the directory containing the project */
   public readonly path: string;
-  /** the version of the project */
-  public readonly version: string;
-  /** merged set of dependencies of the project, [name => version range] */
-  public readonly allDependencies: IPackageDependencies;
-  /** regular dependencies of the project, [name => version range] */
-  public readonly productionDependencies: IPackageDependencies;
-  /** development dependencies of the project, [name => version range] */
-  public readonly devDependencies: IPackageDependencies;
-  /** scripts defined in the package.json file for the project [name => body] */
-  public readonly scripts: IPackageScripts;
-  /** states if this project is a Bazel package */
-  public readonly bazelPackage: boolean;
+  public readonly allDependencies: PackageDependencies;
+  public readonly productionDependencies: PackageDependencies;
+  public readonly devDependencies: PackageDependencies;
+  public readonly scripts: PackageScripts;
 
-  public isSinglePackageJsonProject = false;
-
-  constructor(packageJson: IPackageJson, projectPath: string) {
+  constructor(packageJson: PackageJson, projectPath: string) {
     this.json = Object.freeze(packageJson);
     this.path = projectPath;
 
-    this.packageJsonLocation = Path.resolve(this.path, 'package.json');
-    this.nodeModulesLocation = Path.resolve(this.path, 'node_modules');
-    this.targetLocation = Path.resolve(this.path, 'target');
+    this.packageJsonLocation = path.resolve(this.path, 'package.json');
+    this.nodeModulesLocation = path.resolve(this.path, 'node_modules');
+    this.targetLocation = path.resolve(this.path, 'target');
 
-    this.version = this.json.version;
     this.productionDependencies = this.json.dependencies || {};
     this.devDependencies = this.json.devDependencies || {};
     this.allDependencies = {
       ...this.devDependencies,
       ...this.productionDependencies,
     };
-    this.isSinglePackageJsonProject = this.json.name === 'kibana';
 
     this.scripts = this.json.scripts || {};
-
-    this.bazelPackage =
-      !this.isSinglePackageJsonProject && Fs.existsSync(Path.resolve(this.path, 'BUILD.bazel'));
   }
 
-  public get name(): string {
+  get name(): string {
     return this.json.name;
   }
 
-  public ensureValidProjectDependency(project: Project) {
-    const relativePathToProject = normalizePath(Path.relative(this.path, project.path));
-    const relativePathToProjectIfBazelPkg = normalizePath(
-      Path.relative(
-        this.path,
-        `${__dirname}/../../../bazel-bin/packages/${Path.basename(project.path)}`
-      )
+  ensureValidProjectDependency(project: Project) {
+    const relativePathToProject = normalizePath(
+      path.relative(this.path, project.path)
     );
 
     const versionInPackageJson = this.allDependencies[project.name];
     const expectedVersionInPackageJson = `link:${relativePathToProject}`;
-    const expectedVersionInPackageJsonIfBazelPkg = `link:${relativePathToProjectIfBazelPkg}`;
 
-    // TODO: after introduce bazel to build all the packages and completely remove the support for kbn packages
-    //  do not allow child projects to hold dependencies, unless they are meant to be published externally
-    if (
-      versionInPackageJson === expectedVersionInPackageJson ||
-      versionInPackageJson === expectedVersionInPackageJsonIfBazelPkg
-    ) {
+    if (versionInPackageJson === expectedVersionInPackageJson) {
       return;
     }
 
     const updateMsg = 'Update its package.json to the expected value below.';
     const meta = {
-      actual: `"${project.name}": "${versionInPackageJson}"`,
-      expected: `"${project.name}": "${expectedVersionInPackageJson}" or "${project.name}": "${expectedVersionInPackageJsonIfBazelPkg}"`,
       package: `${this.name} (${this.packageJsonLocation})`,
+      expected: `"${project.name}": "${expectedVersionInPackageJson}"`,
+      actual: `"${project.name}": "${versionInPackageJson}"`,
     };
 
     if (isLinkDependency(versionInPackageJson)) {
       throw new CliError(
-        `[${this.name}] depends on [${project.name}] using 'link:', but the path is wrong. ${updateMsg}`,
+        `[${this.name}] depends on [${
+          project.name
+        }] using 'link:', but the path is wrong. ${updateMsg}`,
         meta
       );
     }
 
     throw new CliError(
-      `[${this.name}] depends on [${project.name}] but it's not using the local package. ${updateMsg}`,
+      `[${this.name}] depends on [${
+        project.name
+      }], but it's not using the local package. ${updateMsg}`,
       meta
     );
   }
 
-  public getBuildConfig(): BuildConfig {
+  getBuildConfig(): BuildConfig {
     return (this.json.kibana && this.json.kibana.build) || {};
   }
 
@@ -140,27 +104,18 @@ export class Project {
    * This config can be specified to only include the project's build artifacts
    * instead of everything located in the project directory.
    */
-  public getIntermediateBuildDirectory() {
-    return Path.resolve(this.path, this.getBuildConfig().intermediateBuildDirectory || '.');
+  getIntermediateBuildDirectory() {
+    return path.resolve(
+      this.path,
+      this.getBuildConfig().intermediateBuildDirectory || '.'
+    );
   }
 
-  public getCleanConfig(): CleanConfig {
-    return (this.json.kibana && this.json.kibana.clean) || {};
-  }
-
-  public isBazelPackage() {
-    return this.bazelPackage;
-  }
-
-  public isFlaggedAsDevOnly() {
-    return !!(this.json.kibana && this.json.kibana.devOnly);
-  }
-
-  public hasScript(name: string) {
+  hasScript(name: string) {
     return name in this.scripts;
   }
 
-  public getExecutables(): { [key: string]: string } {
+  getExecutables(): { [key: string]: string } {
     const raw = this.json.bin;
 
     if (!raw) {
@@ -169,14 +124,14 @@ export class Project {
 
     if (typeof raw === 'string') {
       return {
-        [this.name]: Path.resolve(this.path, raw),
+        [this.name]: path.resolve(this.path, raw),
       };
     }
 
     if (typeof raw === 'object') {
       const binsConfig: { [k: string]: string } = {};
       for (const binName of Object.keys(raw)) {
-        binsConfig[binName] = Path.resolve(this.path, raw[binName]);
+        binsConfig[binName] = path.resolve(this.path, raw[binName]);
       }
       return binsConfig;
     }
@@ -185,43 +140,38 @@ export class Project {
       `[${this.name}] has an invalid "bin" field in its package.json, ` +
         `expected an object or a string`,
       {
-        binConfig: inspect(raw),
         package: `${this.name} (${this.packageJsonLocation})`,
+        binConfig: inspect(raw),
       }
     );
   }
 
-  public async runScript(scriptName: string, args: string[] = []) {
-    log.info(`Running script [${scriptName}] in [${this.name}]:`);
+  async runScript(scriptName: string, args: string[] = []) {
+    console.log(
+      chalk.bold(
+        `\n\nRunning script [${chalk.green(scriptName)}] in [${chalk.green(
+          this.name
+        )}]:\n`
+      )
+    );
     return runScriptInPackage(scriptName, args, this);
   }
 
-  public runScriptStreaming(
-    scriptName: string,
-    options: { args?: string[]; debug?: boolean } = {}
-  ) {
-    return runScriptInPackageStreaming({
-      script: scriptName,
-      args: options.args || [],
-      pkg: this,
-      debug: options.debug,
-    });
+  runScriptStreaming(scriptName: string, args: string[] = []) {
+    return runScriptInPackageStreaming(scriptName, args, this);
   }
 
-  public hasDependencies() {
+  hasDependencies() {
     return Object.keys(this.allDependencies).length > 0;
   }
 
-  public isEveryDependencyLocal() {
-    return Object.values(this.allDependencies).every((dep) => isLinkDependency(dep));
-  }
-
-  public async installDependencies(options: { extraArgs?: string[] } = {}) {
-    log.info(`[${this.name}] running yarn`);
-
-    log.write('');
-    await installInDir(this.path, options?.extraArgs);
-    log.write('');
+  async installDependencies({ extraArgs }: { extraArgs: string[] }) {
+    console.log(
+      chalk.bold(
+        `\n\nInstalling dependencies in [${chalk.green(this.name)}]:\n`
+      )
+    );
+    return installInDir(this.path, extraArgs);
   }
 }
 

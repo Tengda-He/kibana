@@ -1,19 +1,10 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
+import Wreck from 'wreck';
+import Progress from '../progress';
+import { fromNode as fn } from 'bluebird';
 import { createWriteStream } from 'fs';
-
-import Wreck from '@hapi/wreck';
 import HttpProxyAgent from 'http-proxy-agent';
 import HttpsProxyAgent from 'https-proxy-agent';
 import { getProxyForUrl } from 'proxy-from-env';
-
-import { Progress } from '../progress';
 
 function getProxyAgent(sourceUrl, logger) {
   const proxy = getProxyForUrl(sourceUrl);
@@ -31,31 +22,32 @@ function getProxyAgent(sourceUrl, logger) {
   }
 }
 
-async function sendRequest({ sourceUrl, timeout }, logger) {
+function sendRequest({ sourceUrl, timeout }, logger) {
   const maxRedirects = 11; //Because this one goes to 11.
-  const reqOptions = { timeout, redirects: maxRedirects };
-  const proxyAgent = getProxyAgent(sourceUrl, logger);
+  return fn(cb => {
+    const reqOptions = { timeout, redirects: maxRedirects };
+    const proxyAgent = getProxyAgent(sourceUrl, logger);
 
-  if (proxyAgent) {
-    reqOptions.agent = proxyAgent;
-  }
-
-  try {
-    const promise = Wreck.request('GET', sourceUrl, reqOptions);
-    const req = promise.req;
-    const resp = await promise;
-    if (resp.statusCode >= 400) {
-      throw new Error('ENOTFOUND');
+    if (proxyAgent) {
+      reqOptions.agent = proxyAgent;
     }
 
-    return { req, resp };
-  } catch (err) {
-    if (err.code === 'ECONNREFUSED') {
-      err = new Error('ENOTFOUND');
-    }
+    const req = Wreck.request('GET', sourceUrl, reqOptions, (err, resp) => {
+      if (err) {
+        if (err.code === 'ECONNREFUSED') {
+          err = new Error('ENOTFOUND');
+        }
 
-    throw err;
-  }
+        return cb(err);
+      }
+
+      if (resp.statusCode >= 400) {
+        return cb(new Error('ENOTFOUND'));
+      }
+
+      cb(null, { req, resp });
+    });
+  });
 }
 
 function downloadResponse({ resp, targetPath, progress }) {
@@ -82,7 +74,7 @@ function downloadResponse({ resp, targetPath, progress }) {
 /*
 Responsible for managing http transfers
 */
-export async function downloadHttpFile(logger, sourceUrl, targetPath, timeout) {
+export default async function downloadUrl(logger, sourceUrl, targetPath, timeout) {
   try {
     const { req, resp } = await sendRequest({ sourceUrl, timeout }, logger);
 

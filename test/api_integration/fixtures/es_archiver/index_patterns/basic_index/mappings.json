@@ -9,33 +9,25 @@
       }
     },
     "mappings": {
-      "properties": {
-        "bar": {
-          "type": "boolean"
-        },
-        "baz": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
+      "type": {
+        "properties": {
+          "bar": {
+            "type": "boolean"
+          },
+          "baz": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
             }
-          }
-        },
-        "foo": {
-          "type": "long"
-        },
-        "nestedField": {
-          "type": "nested",
-          "properties": {
-            "child": {
-              "type": "keyword"
-            }
+          },
+          "foo": {
+            "type": "long"
           }
         }
       }
     }
   }
 }
-
-

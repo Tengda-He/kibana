@@ -1,19 +1,14 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import { set as lodashSet } from '@elastic/safer-lodash-set';
 import _ from 'lodash';
-import { statSync } from 'fs';
+import { statSync, lstatSync, realpathSync } from 'fs';
+import { isWorker } from 'cluster';
 import { resolve } from 'path';
-import url from 'url';
 
-import { getConfigPath, fromRoot, isKibanaDistributable } from '@kbn/utils';
-import { readKeystore } from '../keystore/read_keystore';
+import { fromRoot } from '../../utils';
+import { getConfig } from '../../server/path';
+import { readYamlConfig } from './read_yaml_config';
+import { readKeystore } from './read_keystore';
+
+import { DEV_SSL_CERT_PATH, DEV_SSL_KEY_PATH } from '../dev_ssl';
 
 function canRequire(path) {
   try {
@@ -28,20 +23,26 @@ function canRequire(path) {
   }
 }
 
-const DEV_MODE_PATH = '@kbn/cli-dev-mode';
-const DEV_MODE_SUPPORTED = canRequire(DEV_MODE_PATH);
-
-const getBootstrapScript = (isDev) => {
-  if (DEV_MODE_SUPPORTED && isDev && process.env.isDevCliChild !== 'true') {
-    // need dynamic require to exclude it from production build
-    // eslint-disable-next-line import/no-dynamic-require
-    const { bootstrapDevMode } = require(DEV_MODE_PATH);
-    return bootstrapDevMode;
-  } else {
-    const { bootstrap } = require('../../core/server');
-    return bootstrap;
+function isSymlinkTo(link, dest) {
+  try {
+    const stat = lstatSync(link);
+    return stat.isSymbolicLink() && realpathSync(link) === dest;
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
   }
-};
+}
+
+const CLUSTER_MANAGER_PATH = resolve(__dirname, '../cluster/cluster_manager');
+const CAN_CLUSTER = canRequire(CLUSTER_MANAGER_PATH);
+
+// xpack is installed in both dev and the distributable, it's optional if
+// install is a link to the source, not an actual install
+const XPACK_INSTALLED_DIR = resolve(__dirname, '../../../node_modules/x-pack');
+const XPACK_SOURCE_DIR = resolve(__dirname, '../../../x-pack');
+const XPACK_INSTALLED = canRequire(XPACK_INSTALLED_DIR);
+const XPACK_OPTIONAL = isSymlinkTo(XPACK_INSTALLED_DIR, XPACK_SOURCE_DIR);
 
 const pathCollector = function () {
   const paths = [];
@@ -52,92 +53,64 @@ const pathCollector = function () {
 };
 
 const configPathCollector = pathCollector();
+const pluginDirCollector = pathCollector();
 const pluginPathCollector = pathCollector();
 
-function applyConfigOverrides(rawConfig, opts, extraCliOptions) {
-  const set = _.partial(lodashSet, rawConfig);
-  const get = _.partial(_.get, rawConfig);
-  const has = _.partial(_.has, rawConfig);
-  const merge = _.partial(_.merge, rawConfig);
-  if (opts.oss) {
-    delete rawConfig.xpack;
-  }
-
-  // only used to set cliArgs.envName, we don't want to inject that into the config
-  delete extraCliOptions.env;
+function readServerSettings(opts, extraCliOptions) {
+  const settings = readYamlConfig(opts.config);
+  const set = _.partial(_.set, settings);
+  const get = _.partial(_.get, settings);
+  const has = _.partial(_.has, settings);
+  const merge = _.partial(_.merge, settings);
 
   if (opts.dev) {
-    if (!has('elasticsearch.serviceAccountToken') && opts.devCredentials !== false) {
-      if (!has('elasticsearch.username')) {
-        set('elasticsearch.username', 'kibana_system');
-      }
+    set('env', 'development');
+    set('optimize.watch', true);
 
-      if (!has('elasticsearch.password')) {
-        set('elasticsearch.password', 'changeme');
-      }
+    if (!has('elasticsearch.username')) {
+      set('elasticsearch.username', 'elastic');
+    }
+
+    if (!has('elasticsearch.password')) {
+      set('elasticsearch.password', 'changeme');
     }
 
     if (opts.ssl) {
-      // @kbn/dev-utils is part of devDependencies
-      // eslint-disable-next-line import/no-extraneous-dependencies
-      const { CA_CERT_PATH, KBN_KEY_PATH, KBN_CERT_PATH } = require('@kbn/dev-utils');
-      const customElasticsearchHosts = opts.elasticsearch
-        ? opts.elasticsearch.split(',')
-        : [].concat(get('elasticsearch.hosts') || []);
-
-      function ensureNotDefined(path) {
-        if (has(path)) {
-          throw new Error(`Can't use --ssl when "${path}" configuration is already defined.`);
-        }
-      }
-
-      ensureNotDefined('server.ssl.certificate');
-      ensureNotDefined('server.ssl.key');
-      ensureNotDefined('server.ssl.keystore.path');
-      ensureNotDefined('server.ssl.truststore.path');
-      ensureNotDefined('server.ssl.certificateAuthorities');
-      ensureNotDefined('elasticsearch.ssl.certificateAuthorities');
-
-      const elasticsearchHosts = (
-        (customElasticsearchHosts.length > 0 && customElasticsearchHosts) || [
-          'https://localhost:9200',
-        ]
-      ).map((hostUrl) => {
-        const parsedUrl = url.parse(hostUrl);
-        if (parsedUrl.hostname !== 'localhost') {
-          throw new Error(
-            `Hostname "${parsedUrl.hostname}" can't be used with --ssl. Must be "localhost" to work with certificates.`
-          );
-        }
-        return `https://localhost:${parsedUrl.port}`;
-      });
-
       set('server.ssl.enabled', true);
-      set('server.ssl.certificate', KBN_CERT_PATH);
-      set('server.ssl.key', KBN_KEY_PATH);
-      set('server.ssl.certificateAuthorities', CA_CERT_PATH);
-      set('elasticsearch.hosts', elasticsearchHosts);
-      set('elasticsearch.ssl.certificateAuthorities', CA_CERT_PATH);
+    }
+
+    if (opts.ssl && !has('server.ssl.certificate') && !has('server.ssl.key')) {
+      set('server.ssl.certificate', DEV_SSL_CERT_PATH);
+      set('server.ssl.key', DEV_SSL_KEY_PATH);
     }
   }
 
-  if (opts.elasticsearch) set('elasticsearch.hosts', opts.elasticsearch.split(','));
+  if (opts.elasticsearch) set('elasticsearch.url', opts.elasticsearch);
   if (opts.port) set('server.port', opts.port);
   if (opts.host) set('server.host', opts.host);
+  if (opts.quiet) set('logging.quiet', true);
+  if (opts.silent) set('logging.silent', true);
+  if (opts.verbose) set('logging.verbose', true);
+  if (opts.logFile) set('logging.dest', opts.logFile);
 
-  if (opts.silent) {
-    set('logging.root.level', 'off');
-  }
-  if (opts.verbose) {
-    set('logging.root.level', 'all');
-  }
+  set('plugins.scanDirs', _.compact([].concat(
+    get('plugins.scanDirs'),
+    opts.pluginDir
+  )));
 
-  set('plugins.paths', _.compact([].concat(get('plugins.paths'), opts.pluginPath)));
+  set('plugins.paths', _.compact([].concat(
+    get('plugins.paths'),
+    opts.pluginPath,
 
-  merge(extraCliOptions);
+    XPACK_INSTALLED && (!XPACK_OPTIONAL || !opts.oss)
+      ? [XPACK_INSTALLED_DIR]
+      : [],
+  )));
+
   merge(readKeystore());
+  merge(extraCliOptions);
 
-  return rawConfig;
+  return settings;
 }
 
 export default function (program) {
@@ -146,105 +119,119 @@ export default function (program) {
   command
     .description('Run the kibana server')
     .collectUnknownOptions()
-    .option('-e, --elasticsearch <uri1,uri2>', 'Elasticsearch instances')
+    .option('-e, --elasticsearch <uri>', 'Elasticsearch instance')
     .option(
       '-c, --config <path>',
-      'Path to the config file, use multiple --config args to include multiple config files',
+      'Path to the config file, can be changed with the CONFIG_PATH environment variable as well. ' +
+    'Use multiple --config args to include multiple config files.',
       configPathCollector,
-      [getConfigPath()]
+      [ getConfig() ]
     )
     .option('-p, --port <port>', 'The port to bind to', parseInt)
-    .option('-Q, --silent', 'Set the root logger level to off')
-    .option('--verbose', 'Set the root logger level to all')
+    .option('-q, --quiet', 'Prevent all logging except errors')
+    .option('-Q, --silent', 'Prevent all logging')
+    .option('--verbose', 'Turns on verbose logging')
     .option('-H, --host <host>', 'The host to bind to')
+    .option('-l, --log-file <path>', 'The file to log to')
     .option(
-      '-l, --log-file <path>',
-      'Deprecated, set logging file destination in your configuration'
+      '--plugin-dir <path>',
+      'A path to scan for plugins, this can be specified multiple ' +
+      'times to specify multiple directories',
+      pluginDirCollector,
+      [
+        fromRoot('plugins'),
+        fromRoot('src/core_plugins')
+      ]
     )
     .option(
       '--plugin-path <path>',
       'A path to a plugin which should be included by the server, ' +
-        'this can be specified multiple times to specify multiple paths',
+    'this can be specified multiple times to specify multiple paths',
       pluginPathCollector,
       []
     )
-    .option('--optimize', 'Deprecated, running the optimizer is no longer required');
+    .option('--plugins <path>', 'an alias for --plugin-dir', pluginDirCollector);
 
-  if (!isKibanaDistributable()) {
+  if (XPACK_OPTIONAL) {
     command
-      .option('--oss', 'Start Kibana without X-Pack')
-      .option(
-        '--run-examples',
-        'Adds plugin paths for all the Kibana example plugins and runs with no base path'
-      );
+      .option('--oss', 'Start Kibana without X-Pack');
   }
 
-  if (DEV_MODE_SUPPORTED) {
+  if (CAN_CLUSTER) {
     command
       .option('--dev', 'Run the server with development mode defaults')
       .option('--ssl', 'Run the dev server using HTTPS')
-      .option('--dist', 'Use production assets from kbn/optimizer')
-      .option(
-        '--no-base-path',
-        "Don't put a proxy in front of the dev server, which adds a random basePath"
-      )
-      .option('--no-watch', 'Prevents automatic restarts of the server in --dev mode')
-      .option('--no-optimizer', 'Disable the kbn/optimizer completely')
-      .option('--no-cache', 'Disable the kbn/optimizer cache')
-      .option('--no-dev-config', 'Prevents loading the kibana.dev.yml file in --dev mode')
-      .option(
-        '--no-dev-credentials',
-        'Prevents setting default values for `elasticsearch.username` and `elasticsearch.password` in --dev mode'
-      );
+      .option('--no-base-path', 'Don\'t put a proxy in front of the dev server, which adds a random basePath')
+      .option('--no-watch', 'Prevents automatic restarts of the server in --dev mode');
   }
 
-  command.action(async function (opts) {
-    if (opts.dev && opts.devConfig !== false) {
-      try {
-        const kbnDevConfig = fromRoot('config/kibana.dev.yml');
-        if (statSync(kbnDevConfig).isFile()) {
-          opts.config.push(kbnDevConfig);
-        }
-      } catch (err) {
+  command
+    .action(async function (opts) {
+      if (opts.dev) {
+        try {
+          const kbnDevConfig = fromRoot('config/kibana.dev.yml');
+          if (statSync(kbnDevConfig).isFile()) {
+            opts.config.push(kbnDevConfig);
+          }
+        } catch (err) {
         // ignore, kibana.dev.yml does not exist
+        }
       }
-    }
 
-    const unknownOptions = this.getUnknownOptions();
-    const configs = [].concat(opts.config || []);
-    const cliArgs = {
-      dev: !!opts.dev,
-      envName: unknownOptions.env ? unknownOptions.env.name : undefined,
-      silent: !!opts.silent,
-      verbose: !!opts.verbose,
-      watch: !!opts.watch,
-      runExamples: !!opts.runExamples,
-      // We want to run without base path when the `--run-examples` flag is given so that we can use local
-      // links in other documentation sources, like "View this tutorial [here](http://localhost:5601/app/tutorial/xyz)".
-      // We can tell users they only have to run with `yarn start --run-examples` to get those
-      // local links to work.  Similar to what we do for "View in Console" links in our
-      // elastic.co links.
-      basePath: opts.runExamples ? false : !!opts.basePath,
-      optimize: !!opts.optimize,
-      disableOptimizer: !opts.optimizer,
-      oss: !!opts.oss,
-      cache: !!opts.cache,
-      dist: !!opts.dist,
-    };
+      const getCurrentSettings = () => readServerSettings(opts, this.getUnknownOptions());
+      const settings = getCurrentSettings();
 
-    // In development mode, the main process uses the @kbn/dev-cli-mode
-    // bootstrap script instead of core's. The DevCliMode instance
-    // is in charge of starting up the optimizer, and spawning another
-    // `/script/kibana` process with the `isDevCliChild` varenv set to true.
-    // This variable is then used to identify that we're the 'real'
-    // Kibana server process, and will be using core's bootstrap script
-    // to effectively start Kibana.
-    const bootstrapScript = getBootstrapScript(cliArgs.dev);
+      if (CAN_CLUSTER && opts.dev && !isWorker) {
+        // stop processing the action and handoff to cluster manager
+        const ClusterManager = require(CLUSTER_MANAGER_PATH);
+        new ClusterManager(opts, settings);
+        return;
+      }
 
-    await bootstrapScript({
-      configs,
-      cliArgs,
-      applyConfigOverrides: (rawConfig) => applyConfigOverrides(rawConfig, opts, unknownOptions),
+      let kbnServer = {};
+      const KbnServer = require('../../server/kbn_server');
+      try {
+        kbnServer = new KbnServer(settings);
+        await kbnServer.ready();
+      } catch (error) {
+        const { server } = kbnServer;
+
+        switch (error.code) {
+          case 'EADDRINUSE':
+            logFatal(`Port ${error.port} is already in use. Another instance of Kibana may be running!`, server);
+            break;
+
+          case 'InvalidConfig':
+            logFatal(error.message, server);
+            break;
+
+          default:
+            logFatal(error, server);
+            break;
+        }
+
+        kbnServer.close();
+        const exitCode = error.processExitCode == null ? 1 : error.processExitCode;
+        // eslint-disable-next-line no-process-exit
+        process.exit(exitCode);
+      }
+
+      process.on('SIGHUP', function reloadConfig() {
+        const settings = getCurrentSettings();
+        kbnServer.server.log(['info', 'config'], 'Reloading logging configuration due to SIGHUP.');
+        kbnServer.applyLoggingConfiguration(settings);
+        kbnServer.server.log(['info', 'config'], 'Reloaded logging configuration due to SIGHUP.');
+      });
+
+      return kbnServer;
     });
-  });
+}
+
+function logFatal(message, server) {
+  if (server) {
+    server.log(['fatal'], message);
+  }
+
+  // It's possible for the Hapi logger to not be setup
+  console.error('FATAL', message);
 }

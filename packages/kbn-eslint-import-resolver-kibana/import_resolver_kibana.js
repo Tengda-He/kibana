@@ -1,11 +1,3 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const { join, dirname, extname } = require('path');
 
 const webpackResolver = require('eslint-import-resolver-webpack');
@@ -16,6 +8,7 @@ const {
   getProjectRoot,
   getWebpackConfig,
   isFile,
+  isProbablyWebpackShim,
   getIsPathRequest,
   resolveWebpackAlias,
 } = require('./lib');
@@ -44,11 +37,8 @@ function tryNodeResolver(importRequest, file, config) {
   return nodeResolver.resolve(
     importRequest,
     file,
-    // we use Object.assign so that this file is compatible with slightly older
-    // versions of node.js used by IDEs (eg. resolvers are run in the Electron
-    // process in Atom)
     Object.assign({}, config, {
-      extensions: ['.js', '.json', '.ts', '.tsx'],
+      extensions: ['.js', '.json'],
       isFile,
     })
   );
@@ -89,9 +79,16 @@ exports.resolve = function resolveKibanaPath(importRequest, file, config) {
     }
   }
 
-  const nodeResult = tryNodeResolver(importRequest, file, config);
-  if (nodeResult && nodeResult.found) {
-    return nodeResult;
+  // only use the node resolver if the importRequest is a path, or is
+  // a module request but not one that's probably a webpackShim. This
+  // prevents false positives as webpackShims are likely to be resolved
+  // to the node_modules directory by the node resolver, but we want
+  // them to resolve to the actual shim
+  if (isPathRequest || !isProbablyWebpackShim(importRequest, file)) {
+    const nodeResult = tryNodeResolver(importRequest, file, config);
+    if (nodeResult && nodeResult.found) {
+      return nodeResult;
+    }
   }
 
   return webpackResolver.resolve(importRequest, file, {

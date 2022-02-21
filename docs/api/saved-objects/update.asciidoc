@@ -1,64 +1,38 @@
 [[saved-objects-api-update]]
-=== Update object API
-++++
-<titleabbrev>Update object</titleabbrev>
-++++
+=== Update Object
 
-experimental[] Update the attributes for existing {kib} saved objects.
+experimental[This functionality is *experimental* and may be changed or removed completely in a future release.]
 
-[[saved-objects-api-update-request]]
+The update saved object API enables you to update the attributes for an
+existing Kibana saved object.
+
 ==== Request
 
-`PUT <kibana host>:<port>/api/saved_objects/<type>/<id>`
+`PUT /api/saved_objects/<type>/<id>`
 
-`PUT <kibana host>:<port>/s/<space_id>/api/saved_objects/<type>/<id>`
+==== Path Parameters
 
-[[saved-objects-api-update-path-params]]
-==== Path parameters
+`type` (required)::
+  (string) Valid options, include: `visualization`, `dashboard`, `search`, `index-pattern`, `config`, and `timelion-sheet`
 
-`space_id`::
-  (Optional, string) An identifier for the space. If `space_id` is not provided in the URL, the default space is used.
+`id` (required)::
+  (string) ID of object to update
 
-`type`::
-  (Required, string) Valid options include `visualization`, `dashboard`, `search`, `index-pattern`, `config`.
 
-`id`::
-  (Required, string) The object ID to update.
+==== Request Body
 
-[[saved-objects-api-update-request-body]]
-==== Request body
+`attributes` (required)::
+  (object) The data to persist
 
-`attributes`::
-  (Required, object) The data to persist.
-+
-WARNING: When you update, attributes are not validated, which allows you to pass arbitrary and ill-formed data into the API and break {kib}. Make sure any data that you send to the API is properly formed.
 
-`references`::
-  (Optional, array) Objects with `name`, `id`, and `type` properties that describe the other saved objects this object references. To refer to the other saved object, use `name` in the attributes, but never the `id`, which automatically updates during migrations or import/export.
+==== Examples
 
-`upsert`::
-  (Optional, object) If specified, will create the document with the given upsert attributes if it doesn't exist. 
+The following example updates an existing index pattern object identified as
+`my-pattern` with a different index pattern title.
 
-[[saved-objects-api-update-errors-codes]]
-==== Response code
-
-`200`::
-    Indicates a successful call.
-
-`404`::
-    Indicates the object was not found.
-
-`409`::
-    Indicates a <<saved-objects-api-update-conflict-errors,conflict error>>.
-
-[[saved-objects-api-update-example]]
-==== Example
-
-Update an existing {data-source} object,`my-pattern`, with a different title:
-
-[source,sh]
+[source,js]
 --------------------------------------------------
-$ curl -X PUT api/saved_objects/index-pattern/my-pattern
+PUT api/saved_objects/index-pattern/my-pattern
 {
   "attributes": {
     "title": "some-other-pattern-*"
@@ -67,9 +41,10 @@ $ curl -X PUT api/saved_objects/index-pattern/my-pattern
 --------------------------------------------------
 // KIBANA
 
-The API returns the following:
+A successful call returns a response code of `200` and a response body
+containing a JSON structure similar to the following example:
 
-[source,sh]
+[source,js]
 --------------------------------------------------
 {
   "id": "my-pattern",
@@ -81,9 +56,8 @@ The API returns the following:
 }
 --------------------------------------------------
 
-[[saved-objects-api-update-conflict-errors]]
-==== Conflict errors
+==== Known issues
 
-Starting in {kib} 8.0, saved objects can exist in multiple spaces. As a result, you may encounter a 409 *alias conflict* error when using
-the `upsert` option. The Update API response is limited and does not include additional metadata. You can get more details about this error
-by using the <<saved-objects-api-bulk-create,Bulk create API>> instead.
+1. *Attributes are not validated at update time*. This means you can pass
+arbitrary and ill-formed data into this API that can break Kibana. Make sure
+any data you send to this API is properly formed.

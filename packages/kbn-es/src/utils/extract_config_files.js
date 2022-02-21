@@ -1,27 +1,24 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 const path = require('path');
 const fs = require('fs');
+const mkdirp = require('mkdirp');
 
 /**
  * Copies config references to an absolute path to
- * the provided destination. This is necessary as ES security
+ * the provided destination. This is necicary as ES security
  * requires files to be within the installation directory
  *
  * @param {Array} config
  * @param {String} dest
  */
-exports.extractConfigFiles = function extractConfigFiles(config, dest, options = {}) {
+exports.extractConfigFiles = function extractConfigFiles(
+  config,
+  dest,
+  options = {}
+) {
   const originalConfig = typeof config === 'string' ? [config] : config;
   const localConfig = [];
 
-  originalConfig.forEach((prop) => {
+  originalConfig.forEach(prop => {
     const [key, value] = prop.split('=');
 
     if (isFile(value)) {
@@ -43,14 +40,14 @@ exports.extractConfigFiles = function extractConfigFiles(config, dest, options =
 };
 
 function isFile(dest = '') {
-  return path.isAbsolute(dest) && path.extname(dest).length > 0 && fs.existsSync(dest);
+  return path.isAbsolute(dest) && path.extname(dest).length > 0;
 }
 
 function copyFileSync(src, dest) {
   const destPath = path.dirname(dest);
 
   if (!fs.existsSync(destPath)) {
-    fs.mkdirSync(destPath, { recursive: true });
+    mkdirp(destPath);
   }
 
   fs.writeFileSync(dest, fs.readFileSync(src));

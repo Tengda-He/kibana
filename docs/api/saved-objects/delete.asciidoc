@@ -1,52 +1,32 @@
 [[saved-objects-api-delete]]
-=== Delete object API
-++++
-<titleabbrev>Delete object</titleabbrev>
-++++
+=== Delete Object
 
-experimental[] Remove {kib} saved objects.
+experimental[This functionality is *experimental* and may be changed or removed completely in a future release.]
 
-WARNING: Once you delete a saved object, _it cannot be recovered_.
+The delete saved object API permanently removes a Kibana saved object. Once a
+saved object has been deleted, _it cannot be recovered_.
 
-[[saved-objects-api-delete-request]]
 ==== Request
 
-`DELETE <kibana host>:<port>/api/saved_objects/<type>/<id>`
+`DELETE /api/saved_objects/<type>/<id>`
 
-`DELETE <kibana host>:<port>/s/<space_id>/api/saved_objects/<type>/<id>`
+==== Path Parameters
 
-[[saved-objects-api-delete-path-params]]
-==== Path parameters
+`type` (required)::
+  (string) Valid options, include: `visualization`, `dashboard`, `search`, `index-pattern`, `config`, and `timelion-sheet`
 
-`space_id`::
-  (Optional, string) An identifier for the space. If `space_id` is not provided in the URL, the default space is used.
+`id` (required)::
+  (string) Object ID being removed
 
-`type`::
-  (Required, string) Valid options include `visualization`, `dashboard`, `search`, `index-pattern`, `config`.
 
-`id`::
-  (Required, string) The object ID that you want to remove.
+==== Examples
 
-[[saved-objects-api-delete-query-params]]
-==== Query parameters
+The following example deletes an index pattern object with an ID of `my-pattern`
 
-`force`::
-  (Optional, boolean) When true, forces an object to be deleted if it exists in multiple namespaces.
-+
-TIP: Use this if you attempted to delete an object and received an HTTP 400 error with the following message: _"Unable to delete saved object that exists in multiple namespaces, use the `force` option to delete it anyway"_
-
-[[saved-objects-api-delete-response-codes]]
-==== Response code
-
-`200`::
-  Indicates a successful call.
-
-==== Example
-
-Delete {a-data-source} object with the `my-pattern` ID:
-
-[source,sh]
+[source,js]
 --------------------------------------------------
-$ curl -X DELETE api/saved_objects/index-pattern/my-pattern
+DELETE api/saved_objects/index-pattern/my-pattern
 --------------------------------------------------
 // KIBANA
+
+A successful call returns a response code of `200`.

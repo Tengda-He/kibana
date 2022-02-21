@@ -9,18 +9,20 @@
       }
     },
     "mappings": {
-      "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
-        "number_conflict": {
-          "type": "float"
-        },
-        "string_conflict": {
-          "type": "keyword"
-        },
-        "success": {
-          "type": "boolean"
+      "type": {
+        "properties": {
+          "@timestamp": {
+            "type": "date"
+          },
+          "number_conflict": {
+            "type": "float"
+          },
+          "string_conflict": {
+            "type": "keyword"
+          },
+          "success": {
+            "type": "boolean"
+          }
         }
       }
     }
@@ -38,18 +40,20 @@
       }
     },
     "mappings": {
-      "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
-        "number_conflict": {
-          "type": "integer"
-        },
-        "string_conflict": {
-          "type": "text"
-        },
-        "success": {
-          "type": "keyword"
+      "type": {
+        "properties": {
+          "@timestamp": {
+            "type": "date"
+          },
+          "number_conflict": {
+            "type": "integer"
+          },
+          "string_conflict": {
+            "type": "text"
+          },
+          "success": {
+            "type": "keyword"
+          }
         }
       }
     }

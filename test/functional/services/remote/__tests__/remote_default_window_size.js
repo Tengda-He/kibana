@@ -1,14 +1,6 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
 import { fork } from 'child_process';
 
-import expect from '@kbn/expect';
+import expect from 'expect.js';
 
 const FTR_SCRIPT = require.resolve('../../../../../scripts/functional_test_runner');
 const CONFIG_PATH = require.resolve('./fixtures/several_nested_window_size_changes/config.js');
@@ -25,8 +17,10 @@ describe('remote default window size', function () {
   this.timeout(30 * SECOND);
 
   it('restores the window size after a suite completes', async () => {
-    const proc = fork(FTR_SCRIPT, ['--config', CONFIG_PATH], {
-      silent: true,
+    const proc = fork(FTR_SCRIPT, [
+      '--config', CONFIG_PATH
+    ], {
+      silent: true
     });
 
     const messages = [];
@@ -63,7 +57,7 @@ describe('remote default window size', function () {
       // but suite3 size should be restored before running suite3's after hook
       { name: 'after suite3', size: SUITE3_SIZE },
       // then finally, suite1 should complete with 1000X1000 because suite3's size was rolled back
-      { name: 'after suite1', size: SUITE1_SIZE },
+      { name: 'after suite1', size: SUITE1_SIZE }
     ]);
   });
 });

@@ -1,34 +1,22 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
-
-import cmdShimCb from 'cmd-shim';
-import del from 'del';
 import fs from 'fs';
-import { ncp } from 'ncp';
-import { dirname, relative } from 'path';
+import { relative, dirname } from 'path';
 import { promisify } from 'util';
+import cmdShimCb from 'cmd-shim';
+import mkdirpCb from 'mkdirp';
 
-const lstat = promisify(fs.lstat);
-export const readFile = promisify(fs.readFile);
-export const writeFile = promisify(fs.writeFile);
+const stat = promisify(fs.stat);
+const readFile = promisify(fs.readFile);
+const unlink = promisify(fs.unlink);
 const symlink = promisify(fs.symlink);
-export const chmod = promisify(fs.chmod);
+const chmod = promisify(fs.chmod);
 const cmdShim = promisify<string, string>(cmdShimCb);
-const mkdir = promisify(fs.mkdir);
-const realpathNative = promisify(fs.realpath.native);
-export const mkdirp = async (path: string) => await mkdir(path, { recursive: true });
-export const rmdirp = async (path: string) => await del(path, { force: true });
-export const unlink = promisify(fs.unlink);
-export const copyDirectory = promisify(ncp);
+const mkdirp = promisify(mkdirpCb);
+
+export { chmod, readFile, mkdirp };
 
 async function statTest(path: string, block: (stats: fs.Stats) => boolean) {
   try {
-    return block(await lstat(path));
+    return block(await stat(path));
   } catch (e) {
     if (e.code === 'ENOENT') {
       return false;
@@ -38,19 +26,11 @@ async function statTest(path: string, block: (stats: fs.Stats) => boolean) {
 }
 
 /**
- * Test if a path points to a symlink.
- * @param path
- */
-export async function isSymlink(path: string) {
-  return await statTest(path, (stats) => stats.isSymbolicLink());
-}
-
-/**
  * Test if a path points to a directory.
  * @param path
  */
 export async function isDirectory(path: string) {
-  return await statTest(path, (stats) => stats.isDirectory());
+  return await statTest(path, stats => stats.isDirectory());
 }
 
 /**
@@ -58,7 +38,7 @@ export async function isDirectory(path: string) {
  * @param path
  */
 export async function isFile(path: string) {
-  return await statTest(path, (stats) => stats.isFile());
+  return await statTest(path, stats => stats.isFile());
 }
 
 /**
@@ -96,18 +76,4 @@ async function forceCreate(src: string, dest: string, type: string) {
   }
 
   await symlink(src, dest, type);
-}
-
-export async function tryRealpath(path: string): Promise<string> {
-  let calculatedPath = path;
-
-  try {
-    calculatedPath = await realpathNative(path);
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      throw error;
-    }
-  }
-
-  return calculatedPath;
 }

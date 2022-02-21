@@ -1,13 +1,16 @@
 [[install]]
-== Install {kib}
+== Installing Kibana
 
 [float]
-=== Hosted {kib}
+=== Hosted Kibana
 
-If you are running our hosted Elasticsearch Service on Elastic Cloud, you access Kibana with a single click. (You can {ess-trial}[sign up for a free trial] and start exploring data in minutes.)
+If you are running our
+https://www.elastic.co/cloud/elasticsearch-service[hosted Elasticsearch Service]
+on Elastic Cloud, you can {cloud}/ec-enable-kibana.html[enable Kibana] with
+the flick of a switch.
 
 [float]
-=== Install {kib} yourself
+=== Installing Kibana Yourself
 
 NOTE: Starting with version 6.0.0, Kibana only supports 64 bit operating systems.
 
@@ -33,7 +36,7 @@ our Debian repository.
 
 `rpm`::
 
-The `rpm` package is suitable for installation on Red Hat, SLES,
+The `rpm` package is suitable for installation on Red Hat, Centos, SLES,
 OpenSuSE and other RPM-based systems.  RPMs may be downloaded from the
 Elastic website or from our RPM repository.
 +
@@ -47,16 +50,15 @@ downloaded from the Elastic Docker Registry.
 <<docker,Running Kibana on Docker>>
 
 IMPORTANT: If your Elasticsearch installation is protected by
-{ref}/elasticsearch-security.html[{stack-security-features}] see
-{kibana-ref}/using-kibana-with-security.html[Configuring security in {kib}] for
+{xpack-ref}/xpack-security.html[{security}] see
+{kibana-ref}/using-kibana-with-security.html[Configuring Security in Kibana] for
 additional setup instructions.
 
-include::install/targz.asciidoc[]
 
-include::install/windows.asciidoc[]
+include::install/targz.asciidoc[]
 
 include::install/deb.asciidoc[]
 
 include::install/rpm.asciidoc[]
 
-include::{kib-repo-dir}/setup/docker.asciidoc[]
+include::install/windows.asciidoc[]

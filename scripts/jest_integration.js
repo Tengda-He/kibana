@@ -1,12 +1,17 @@
-/*
- * Copyright Elasticsearch B.V. and/or licensed to Elasticsearch B.V. under one
- * or more contributor license agreements. Licensed under the Elastic License
- * 2.0 and the Server Side Public License, v 1; you may not use this file except
- * in compliance with, at your election, the Elastic License 2.0 or the Server
- * Side Public License, v 1.
- */
+// # Run Jest integration tests
+//
+// All args will be forwarded directly to Jest, e.g. to watch tests run:
+//
+//     node scripts/jest_integration --watch
+//
+// or to build code coverage:
+//
+//     node scripts/jest_integration --coverage
+//
+// See all cli options in https://facebook.github.io/jest/docs/cli.html
 
-require('../src/setup_node_env/ensure_node_preserve_symlinks');
-process.argv.push('--runInBand');
+const { resolve } = require('path');
+process.argv.push('--config', resolve(__dirname, '../src/dev/jest/config.integration.js'));
 
-require('@kbn/test').runJest('jest.integration.config.js');
+require('../src/babel-register');
+require('../src/dev/jest/cli');
