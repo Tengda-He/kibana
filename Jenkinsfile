@@ -58,10 +58,10 @@ node("test") {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    sh 'aws s3 cp s3://kibana.bfs.vendor/aes/elasticsearch/elasticsearch-oss-6.5.4.tar.gz ./'
+                    sh 'aws s3 cp s3://kibana.bfs.vendor/aes/elasticsearch/elasticsearch-oss-6.3.2.tar.gz ./'
                     echo 'Start Elasticsearch'
-                    sh 'tar -xf elasticsearch-oss-6.5.4.tar.gz'
-                    sh './elasticsearch-6.5.4/bin/elasticsearch &'
+                    sh 'tar -xf elasticsearch-oss-6.3.2.tar.gz'
+                    sh './elasticsearch-6.3.2/bin/elasticsearch &'
                 } 
             }
             
