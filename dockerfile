@@ -11,9 +11,11 @@ unzip libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrand
 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils wget openjdk-8-jre && \
 rm -rf /var/lib/apt/lists/*
 
-RUN aws s3 cp s3://kibana.bfs.vendor/aes/chrome/google-chrome-stable_79.0.3945.117-1_amd64.deb /tmp/google-chrome.deb \
-&& apt install -y /tmp/google-chrome.deb && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
+RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && apt-get update \
+&& apt-get install -y rsync jq bsdtar --no-install-recommends && wget -O /tmp/chrome-linux.zip "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F706915%2Fchrome-linux.zip?generation=1571324979333057&alt=media" \
+&& unzip /tmp/chrome-linux.zip -d /tmp/ && cp /tmp/chrome-linux/chrome /usr/bin/google-chrome \
+&& wget -O /tmp/Linux_x64_698801_chromedriver_linux64.zip "https://www.googleapis.com/download/storage/v1/b/chromium-browser-snapshots/o/Linux_x64%2F698801%2Fchromedriver_linux64.zip?generation=1569200203315649&alt=media" \
+&& unzip /tmp/Linux_x64_698801_chromedriver_linux64.zip -d /tmp/ && cp /tmp/chromedriver_linux64/chromedriver /usr/bin/chromedriver && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN apt-get update && apt-get install -y python-pip
 
 RUN pip install awscli
