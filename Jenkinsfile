@@ -27,7 +27,7 @@ node("test") {
                 sh 'yarn kbn bootstrap'
                 sh 'yarn add --dev chromedriver@79.0.3'
                 sh 'which google-chrome'
-                sh 'which chromedriver'
+                //sh 'which chromedriver'
             }
 
             stage('Unit Test') {
