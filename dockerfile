@@ -14,7 +14,7 @@ rm -rf /var/lib/apt/lists/*
 RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && apt-get update \
 && apt-get install -y rsync jq bsdtar --no-install-recommends
 
-RUN aws s3 cp s3://kibana.bfs.vendor/aes/chrome/google-chrome-stable_79.0.3945.117-1_amd64.deb /tmp/google-chrome.deb \
+RUN aws s3 cp s3://kibana.bfs.vendor/aes/chrome/google-chrome-stable_94.0.4606.81-1_amd64.deb /tmp/google-chrome.deb \
 && apt install -y /tmp/google-chrome.deb && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update && apt-get install -y python-pip
