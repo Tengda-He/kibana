@@ -71,7 +71,7 @@ node("test") {
             }
             
             stage("Run Functional Test") {
-                sh "sleep 60"
+                sh "sleep 120"
                 sh "curl localhost:9200"
                 sh "curl localhost:5601"
                 echo "Start Functional Tests"
