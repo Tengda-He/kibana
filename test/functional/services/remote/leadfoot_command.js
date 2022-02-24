@@ -28,7 +28,7 @@ async function attemptToCreateCommand(log, server, chromedriverApi) {
   }
 
   
-  const session = await server.createSession(browserOptions, driverApi.getRequiredCapabilities());
+  const session = await server.createSession(browserOptions, chromedriverApi);
   if (attemptId !== attemptCounter) return; // abort
 
   log.debug('[leadfoot:command] Registerying session for teardown');
