@@ -94,7 +94,7 @@ node("test") {
                         currentBuild.result = 'FAILURE'
                     }
 
-                    junit 'target/junit/TEST-Jest Functional Tests*.xml'
+                    junit 'target/junit/TEST-UI Functional Tests*.xml'
                 }
             }
         }
